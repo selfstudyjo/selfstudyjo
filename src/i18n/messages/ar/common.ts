@@ -63,6 +63,7 @@ const common: Catalogue = {
     'Post Comment': 'إضافة تعليق',
     'View': 'عرض',
     'View Details': 'عرض التفاصيل',
+    'Cancel appointment': 'إلغاء الموعد',
     'Zoom in': 'تكبير',
     'Zoom out': 'تصغير',
     '+ Add': '+ إضافة',

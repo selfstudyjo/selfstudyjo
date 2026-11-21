@@ -139,15 +139,15 @@
         <FlaskConical class="sfs-topbar__i" />
         <span class="sfs-topbar__label">{{ $t('Labs') }}</span>
       </router-link>
-      <a
+      <router-link
         v-if="open"
         class="sfs-topbar__link"
-        :href="`#/tools${open === 'sql' ? '' : '/' + open}`"
+        :to="`/tools${open === 'sql' ? '' : '/' + open}`"
         @click="open = ''"
       >
         <Maximize2 class="sfs-topbar__i" />
         <span class="sfs-topbar__label">{{ $t('Full page') }}</span>
-      </a>
+      </router-link>
     </div>
 
     <!-- The search results: a dropdown under the bar, or a full-screen sheet on

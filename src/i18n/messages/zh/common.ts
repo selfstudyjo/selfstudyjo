@@ -59,6 +59,7 @@ const common: Catalogue = {
     'Post Comment': '发表评论',
     'View': '查看',
     'View Details': '查看详情',
+    'Cancel appointment': '取消预约',
     'Zoom in': '放大',
     'Zoom out': '缩小',
     '+ Add': '+ 添加',

@@ -126,22 +126,10 @@ const learning: Catalogue = {
     'Search exams by title or course...': '按标题或课程搜索考试……',
     'Start Exam': '开始考试',
     'Login to Schedule': '登录后预约',
-    'Manage Appointment': '管理预约',
     'Next Appointment:': '下次预约：',
-    'Active Appointment Details': '当前预约详情',
-    'Appointment History': '预约记录',
-    'Can Start:': '允许开始：',
     'Course: {v0}': '课程：{v0}',
-    'Date Taken:': '参加日期：',
     'Times Taken:': '参加次数：',
-    'Your Latest Results': '你最近的成绩',
     'Your Latest Score:': '你最近的分数：',
-    'Watch Video Instructions': '观看视频说明',
-    'Watch the video instructions:': '观看视频说明：',
-    'Cancel your exam appointment. The time slot will be freed for other students.':
-        '取消你的考试预约。该时段将释放给其他学生。',
-    'You can reschedule your exam appointment up to 2 days before the scheduled time.':
-        '你可以在考试时间前 2 天之前重新预约。',
 
     /* ---------------------------------------------------------------- *
      * Taking an exam
@@ -688,11 +676,6 @@ const learning: Catalogue = {
     '{v0}% ({v1} attempts)': '{v0}%（{v1} 次尝试）',
     'Practice now - no appointment, no certificate': '立即练习——无需预约，不颁发证书',
     'Practice now': '立即练习',
-    'Your Practice Results': '你的练习成绩',
-    'Best Score:': '最佳成绩：',
-    'Attempts:': '尝试次数：',
-    'Certificate:': '证书：',
-    'Not issued for practice': '练习不颁发证书',
 };
 
 export default learning;

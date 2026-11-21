@@ -137,22 +137,10 @@ const learning: Catalogue = {
     'Search exams by title or course...': 'ابحث عن اختبار بالعنوان أو الدورة...',
     'Start Exam': 'ابدأ الاختبار',
     'Login to Schedule': 'سجّل الدخول للحجز',
-    'Manage Appointment': 'إدارة الموعد',
     'Next Appointment:': 'الموعد القادم:',
-    'Active Appointment Details': 'تفاصيل الموعد النشط',
-    'Appointment History': 'سجل المواعيد',
-    'Can Start:': 'مسموح بالبدء:',
     'Course: {v0}': 'الدورة: {v0}',
-    'Date Taken:': 'تاريخ الأداء:',
     'Times Taken:': 'عدد المحاولات:',
-    'Your Latest Results': 'أحدث نتائجك',
     'Your Latest Score:': 'أحدث نتيجة لك:',
-    'Watch Video Instructions': 'شاهد التعليمات المصوّرة',
-    'Watch the video instructions:': 'شاهد التعليمات المصوّرة:',
-    'Cancel your exam appointment. The time slot will be freed for other students.':
-        'ألغِ موعد اختبارك. سيُتاح الوقت لطلاب آخرين.',
-    'You can reschedule your exam appointment up to 2 days before the scheduled time.':
-        'يمكنك إعادة جدولة موعد اختبارك حتى يومين قبل الوقت المحدَّد.',
 
     /* ---------------------------------------------------------------- *
      * Taking an exam
@@ -714,11 +702,6 @@ const learning: Catalogue = {
     '{v0}% ({v1} attempts)': '{v0}% ({v1} محاولات)',
     'Practice now - no appointment, no certificate': 'تدرّب الآن — بلا موعد وبلا شهادة',
     'Practice now': 'تدرّب الآن',
-    'Your Practice Results': 'نتائجك التدريبية',
-    'Best Score:': 'أفضل نتيجة:',
-    'Attempts:': 'المحاولات:',
-    'Certificate:': 'الشهادة:',
-    'Not issued for practice': 'لا تُصدَر للتدريب',
 };
 
 export default learning;

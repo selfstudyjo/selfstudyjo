@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import { authGuard, publicOnlyGuard } from './guard';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import Home from '../views/Home.vue';
@@ -745,8 +745,15 @@ const routes = [
 ];
 
 const router = createRouter({
-    history: createWebHashHistory(import.meta.env.BASE_URL),
-    routes
+    // Clean paths (no '#'). index.html rewrites legacy /#/ links before boot,
+    // and GitHub Pages serves 404.html (a copy of index.html) for deep paths.
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes,
+    scrollBehavior(to, _from, saved) {
+        if (saved) return saved;
+        if (to.hash) return { el: to.hash, behavior: 'smooth' };
+        return { top: 0 };
+    }
 });
 
 router.beforeEach(async (to, from, next) => {

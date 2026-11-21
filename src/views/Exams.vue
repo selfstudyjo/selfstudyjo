@@ -141,14 +141,6 @@
           </div>
 
           <div class="exam-actions">
-            <!-- View exam details button -->
-            <button @click="viewExamDetails(exam)" class="btn-view">
-              <span>{{ $t('View Details') }}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M15 12L12 15M12 15L9 12M12 15V9M12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21Z"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
 
             <!-- Schedule or Start button based on status -->
             <template v-if="isAuthenticated">
@@ -185,6 +177,9 @@
                       <path d="M8 7V3M16 7V3M7 11H17M5 21H19C20.1046 21 21 20.1046 21 19V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V19C3 20.1046 3.89543 21 5 21Z"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
+                  </button>
+                  <button v-if="canCancelAppointment(exam)" @click="cancelExam(exam)" class="btn-cancel-appointment">
+                    <span>{{ $t('Cancel appointment') }}</span>
                   </button>
                 </div>
               </template>
@@ -225,207 +220,6 @@
       </div>
     </div>
 
-    <!-- Exam Details Modal -->
-    <div v-if="selectedExam" class="modal-overlay" @click.self="selectedExam = null">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>{{ $td(selectedExam) }}</h3>
-          <button @click="selectedExam = null" class="modal-close">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="exam-detail-section">
-            <h4>{{ $t('Exam Information') }}</h4>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <span class="detail-label">{{ $t('Course:') }}</span>
-                <span class="detail-value">{{ selectedExam.course_name || selectedExam.course_id }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">{{ $t('Duration:') }}</span>
-                <span class="detail-value">{{ $t('{v0} minutes', { v0: selectedExam.exam_duration }) }}</span>
-              </div>
-              <div v-if="isAuthenticated" class="detail-item">
-                <span class="detail-label">{{ $t('Status:') }}</span>
-                <span class="detail-value" :class="getExamStatusClass(selectedExam)">
-                  {{ getExamStatus(selectedExam) }}
-                </span>
-              </div>
-              <div v-if="isAuthenticated" class="detail-item">
-                <span class="detail-label">{{ $t('Times Taken:') }}</span>
-                <span class="detail-value">{{ getExamAttempts(selectedExam) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="exam-detail-section">
-            <h4>{{ $t('Instructions') }}</h4>
-            <div class="instructions-content">
-              {{ selectedExam.exam_instructions }}
-            </div>
-          </div>
-
-          <!-- Video Instructions with Embed -->
-          <div v-if="selectedExam.video_instructions_url" class="exam-detail-section">
-            <h4>{{ $t('Video Instructions') }}</h4>
-            <div class="video-container">
-              <div v-if="videoEmbed.canEmbed" class="video-embed-wrapper">
-                <div class="video-embed-container">
-                  <iframe
-                    :src="videoEmbed.embedUrl"
-                    width="100%"
-                    height="300"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen
-                    :title="$t('Exam Instructions Video')"
-                    referrerpolicy="strict-origin-when-cross-origin"
-                  ></iframe>
-                </div>
-              </div>
-              <div v-else class="video-link-container">
-                <p>{{ $t('Watch the video instructions:') }}</p>
-                <a :href="selectedExam.video_instructions_url" target="_blank" class="video-external-link">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M10 16.5L16 12L10 7.5V16.5ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z"
-                          fill="currentColor"/>
-                  </svg>
-                  {{ $t('Watch Video Instructions') }}
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="isAuthenticated && getLatestUserResult(selectedExam)" class="exam-detail-section">
-            <h4>{{ $t('Your Latest Results') }}</h4>
-            <div class="results-section">
-              <div class="result-item">
-                <span class="result-label">{{ $t('Score:') }}</span>
-                <span class="result-value" :class="getLatestUserResult(selectedExam)?.result_status?.toLowerCase()">
-                  {{ getLatestUserResult(selectedExam)?.score }}%
-                </span>
-              </div>
-              <div class="result-item">
-                <span class="result-label">{{ $t('Status:') }}</span>
-                <span class="result-value" :class="getLatestUserResult(selectedExam)?.result_status?.toLowerCase()">
-                  {{ getLatestUserResult(selectedExam)?.result_status }}
-                </span>
-              </div>
-              <div class="result-item">
-                <span class="result-label">{{ $t('Date Taken:') }}</span>
-                <span class="result-value">
-                  {{ formatDate(getLatestUserResult(selectedExam)?.date_taken) }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="isAuthenticated && getBestPracticeResult(selectedExam)" class="exam-detail-section">
-            <h4>{{ $t('Your Practice Results') }}</h4>
-            <div class="results-section">
-              <div class="result-item">
-                <span class="result-label">{{ $t('Best Score:') }}</span>
-                <span class="result-value">{{ getBestPracticeResult(selectedExam)?.score }}%</span>
-              </div>
-              <div class="result-item">
-                <span class="result-label">{{ $t('Attempts:') }}</span>
-                <span class="result-value">{{ getPracticeAttempts(selectedExam) }}</span>
-              </div>
-              <div class="result-item">
-                <span class="result-label">{{ $t('Certificate:') }}</span>
-                <span class="result-value">{{ $t('Not issued for practice') }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Show active appointment details -->
-          <div v-if="isAuthenticated && getActiveAppointment(selectedExam)" class="exam-detail-section">
-            <h4>{{ $t('Active Appointment Details') }}</h4>
-            <div class="appointment-detail-grid">
-              <div class="detail-item">
-                <span class="detail-label">{{ $t('Date:') }}</span>
-                <span class="detail-value">{{ formatDate(getActiveAppointment(selectedExam)?.appointment_date) }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">{{ $t('Status:') }}</span>
-                <span class="detail-value" :class="getAppointmentStatusClass(getActiveAppointment(selectedExam))">
-                  {{ getActiveAppointment(selectedExam)?.appointment_status }}
-                </span>
-              </div>
-              <div v-if="getActiveAppointment(selectedExam)?.proctor_name" class="detail-item">
-                <span class="detail-label">{{ $t('Proctor:') }}</span>
-                <span class="detail-value">{{ getActiveAppointment(selectedExam)?.proctor_name }}</span>
-              </div>
-              <div v-if="getActiveAppointment(selectedExam)?.can_start" class="detail-item">
-                <span class="detail-label">{{ $t('Can Start:') }}</span>
-                <span class="detail-value">{{ getActiveAppointment(selectedExam)?.can_start ? 'Yes' : 'No' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Show historical appointments if any -->
-          <div v-if="isAuthenticated && getHistoricalAppointments(selectedExam).length > 0" class="exam-detail-section">
-            <h4>{{ $t('Appointment History') }}</h4>
-            <div class="history-container">
-              <div v-for="appointment in getHistoricalAppointments(selectedExam)" :key="appointment.external_id" class="history-item">
-                <div class="history-date">{{ formatDate(appointment.appointment_date) }}</div>
-                <div class="history-status" :class="getAppointmentStatusClass(appointment)">
-                  {{ appointment.appointment_status }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Reschedule and Cancel options if available -->
-          <div v-if="isAuthenticated && (canRescheduleAppointment(selectedExam) || canCancelAppointment(selectedExam))" class="exam-detail-section">
-            <h4>{{ $t('Manage Appointment') }}</h4>
-            <div class="appointment-management">
-              <div v-if="canRescheduleAppointment(selectedExam)" class="management-option">
-                <div class="option-icon">🔄</div>
-                <div class="option-details">
-                  <h5>{{ $t('Reschedule Exam') }}</h5>
-                  <p>{{ $t('You can reschedule your exam appointment up to 2 days before the scheduled time.') }}</p>
-                  <button @click="rescheduleExam(selectedExam)" class="btn-reschedule">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 8V12M12 12V16M12 12H16M12 12H8M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    {{ $t('Reschedule Exam') }}
-                  </button>
-                </div>
-              </div>
-
-              <div v-if="canCancelAppointment(selectedExam)" class="management-option">
-                <div class="option-icon">❌</div>
-                <div class="option-details">
-                  <h5>{{ $t('Cancel Appointment') }}</h5>
-                  <p>{{ $t('Cancel your exam appointment. The time slot will be freed for other students.') }}</p>
-                  <button @click="cancelExam(selectedExam)" class="btn-cancel-appointment">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M19 7L18.1327 19.1425C18.0579 20.1891 17.187 21 16.1378 21H7.86224C6.81296 21 5.94208 20.1891 5.86732 19.1425L5 7M10 11V17M14 11V17M15 7V4C15 3.44772 14.5523 3 14 3H10C9.44772 3 9 3.44772 9 4V7M4 7H20"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    {{ $t('Cancel Appointment') }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button @click="selectedExam = null" class="btn-secondary">{{ $t('Close') }}</button>
-          <button v-if="isAuthenticated" @click="practiceExam(selectedExam)" class="btn-secondary">
-            {{ $t('Practice now') }}
-          </button>
-          <button v-if="isAuthenticated && shouldShowScheduleButton(selectedExam)"
-                  @click="scheduleExam(selectedExam)" class="btn-primary">
-            {{ getScheduleButtonText(selectedExam) }}
-          </button>
-          <button v-else-if="!isAuthenticated" @click="goToLogin" class="btn-primary">
-            {{ $t('Login to Schedule') }}
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -434,7 +228,6 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { examService, isPracticeResult, type Exam, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
-import { VideoEmbedService } from '@/utils/videoEmbed';
 import { notificationService } from '@/services/notification.service';
 
 // Import CSS
@@ -452,11 +245,6 @@ const error = ref<string | null>(null);
 const exams = ref<Exam[]>([]);
 const userResults = ref<UserExamResult[]>([]);
 const appointments = ref<ExamAppointment[]>([]);
-const selectedExam = ref<Exam | null>(null);
-const videoEmbed = ref({
-  canEmbed: false,
-  embedUrl: null as string | null
-});
 
 // Search query. `?q=` pre-fills it: the top bar's site search links an exam
 // here, filtered to that exam's (English) title, because an exam has no page
@@ -760,18 +548,6 @@ function getActiveAppointment(exam: Exam): ExamAppointment | undefined {
   return undefined;
 }
 
-function getHistoricalAppointments(exam: Exam): ExamAppointment[] {
-  const userAppointments = getUserAppointmentsForExam(exam);
-  const activeAppointment = getActiveAppointment(exam);
-
-  // Return all appointments except the active one (for history)
-  if (activeAppointment) {
-    return userAppointments.filter(app => app.external_id !== activeAppointment.external_id);
-  }
-
-  return userAppointments;
-}
-
 function hasScheduledAppointment(exam: Exam): boolean {
   const appointment = getActiveAppointment(exam);
   if (!appointment) return false;
@@ -816,40 +592,6 @@ function practiceExam(exam: Exam) {
     return;
   }
   router.push({ path: '/practice-exam', query: { examId: exam.external_id } });
-}
-
-function canRescheduleAppointment(exam: Exam): boolean {
-  if (!isAuthenticated.value) return false;
-
-  // If exam is already passed, cannot reschedule
-  const latestResult = getLatestUserResult(exam);
-  if (latestResult?.result_status === 'PASSED') {
-    return false;
-  }
-
-  const appointment = getActiveAppointment(exam);
-  if (!appointment) return false;
-
-  // Check if appointment status allows rescheduling
-  const reschedulableStatuses = ['Scheduled', 'Taken but Failed', 'Cancelled', 'Expired'];
-  if (!reschedulableStatuses.includes(appointment.appointment_status)) {
-    return false;
-  }
-
-  // For Scheduled appointments, check if more than 2 days remaining
-  if (appointment.appointment_status === 'Scheduled') {
-    const appointmentDate = new Date(appointment.appointment_date);
-    const now = new Date();
-    const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
-    const timeDiff = appointmentDate.getTime() - now.getTime();
-
-    // Allow rescheduling if more than 2 days remaining
-    return timeDiff > twoDaysInMs;
-  }
-
-  // For other reschedulable statuses (Taken but Failed, Cancelled, Expired)
-  // allow rescheduling regardless of time
-  return true;
 }
 
 function canCancelAppointment(exam: Exam): boolean {
@@ -907,20 +649,6 @@ function shouldShowScheduleButton(exam: Exam): boolean {
   return allowedStatuses.includes(appointment.appointment_status);
 }
 
-function viewExamDetails(exam: Exam) {
-  selectedExam.value = exam;
-
-  // Setup video embed if available
-  if (exam.video_instructions_url) {
-    const embedProps = VideoEmbedService.getVideoEmbedProps(exam.video_instructions_url);
-    videoEmbed.value = {
-      canEmbed: embedProps.canEmbed,
-      embedUrl: embedProps.embedUrl
-    };
-  } else {
-    videoEmbed.value = { canEmbed: false, embedUrl: null };
-  }
-}
 
 function scheduleExam(exam: Exam) {
   if (!isAuthenticated.value) {
@@ -934,41 +662,6 @@ function scheduleExam(exam: Exam) {
   });
 }
 
-function rescheduleExam(exam: Exam) {
-  if (!isAuthenticated.value) {
-    goToLogin();
-    return;
-  }
-
-  // If exam is already passed, cannot reschedule
-  const latestResult = getLatestUserResult(exam);
-  if (latestResult?.result_status === 'PASSED') {
-    alert('You have already passed this exam and cannot reschedule it.');
-    return;
-  }
-
-  const appointment = getActiveAppointment(exam);
-  if (appointment) {
-    // Check if appointment status allows rescheduling
-    const reschedulableStatuses = ['Scheduled', 'Taken but Failed', 'Cancelled', 'Expired'];
-    if (!reschedulableStatuses.includes(appointment.appointment_status)) {
-      alert('This appointment cannot be rescheduled.');
-      return;
-    }
-
-    router.push({
-      path: '/schedule-exam',
-      query: {
-        examId: exam.external_id,
-        reschedule: true,
-        appointmentId: appointment.external_id
-      }
-    });
-  } else {
-    // If no appointment exists, go to schedule page
-    scheduleExam(exam);
-  }
-}
 
 async function cancelExam(exam: Exam) {
   if (!isAuthenticated.value) {
