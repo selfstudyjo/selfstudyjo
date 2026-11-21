@@ -4,8 +4,9 @@
       <button class="rf-back-btn" @click="$router.back()"><RfIconBack /> {{ $t('Back') }}</button>
       <h1 class="rf-page-title"><RfIconFile /> {{ $t('Project Details') }}</h1>
       <span v-if="userRole" :class="['rf-role-badge', `rf-role-${userRole}`]">
-        <template v-if="userRole === 'owner'"><RfIconCrown /> {{ $t('Owner') }}</template>
-        <template v-else-if="userRole === 'collaborator'"><RfIconEdit /> {{ $t('Editor') }}</template>
+        <template v-if="myRole === 'owner'"><RfIconCrown /> {{ $t('Owner') }}</template>
+        <template v-else-if="myRole === 'admin'"><RfIconEdit /> {{ $t('Admin') }}</template>
+        <template v-else-if="myRole === 'editor'"><RfIconEdit /> {{ $t('Editor') }}</template>
         <template v-else><RfIconEye /> {{ $t('Viewer') }}</template>
       </span>
     </div>
@@ -100,37 +101,9 @@
         </div>
       </div>
 
-      <!-- Files -->
-      <div class="rf-section rf-detail-files">
-        <h2 class="rf-section-title"><RfIconFile /> {{ $t('Research Files ({v0})', { v0: files.length }) }}</h2>
-
-        <div v-if="canEdit" class="rf-upload-form">
-          <h3><RfIconUpload /> {{ $t('Upload New File') }}</h3>
-          <input type="file" ref="fileInputRef" class="rf-input" @change="onFileSelect" />
-          <input v-model="uploadDesc" class="rf-input" :placeholder="$t('File description')" style="margin-top: 8px;" />
-          <input v-model="uploadVersion" class="rf-input" :placeholder="$t('Version (e.g., v1.0)')" style="margin-top: 8px;" />
-          <button class="rf-btn rf-btn-primary" @click="doUpload" :disabled="!selectedFile || uploading" style="margin-top: 8px;">
-            {{ uploading ? 'Uploading...' : 'Upload File' }}
-          </button>
-        </div>
-
-        <div v-if="files.length === 0" class="rf-empty-sm"><p>{{ $t('No files uploaded yet.') }}</p></div>
-        <div v-else class="rf-files-list">
-          <div v-for="file in files" :key="file.id" class="rf-file-card">
-            <div class="rf-file-info">
-              <span class="rf-file-name"><RfIconAttach /> {{ file.original_filename }}</span>
-              <span class="rf-file-meta">{{ formatFileSize(file.file_size) }} | {{ file.file_type }} | {{ file.version }}</span>
-              <span class="rf-file-desc" v-if="file.description">{{ file.description }}</span>
-            </div>
-            <div class="rf-file-actions" v-if="canViewFiles">
-              <button class="rf-btn rf-btn-xs rf-btn-primary" @click="openFileInNewTab(file)"><RfIconLink /> {{ $t('Open') }}</button>
-              <button class="rf-btn rf-btn-xs rf-btn-secondary" @click="downloadFileToDevice(file)"><RfIconDownload /> {{ $t('Download') }}</button>
-              <button v-if="canEdit" class="rf-btn rf-btn-xs rf-btn-danger" @click="removeFile(file.id)"><RfIconDelete /></button>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <!-- Files: any format, GitHub storage, per-file sharing, AI over files (2026-11-21) -->
+      <ResearchFilesPanel v-if="canViewFiles" :project-id="projectId" :user-id="userId"
+                          :files="files" :team="team" :my-role="myRole" @changed="reloadFiles" />
       <!-- Comments -->
       <div class="rf-section rf-detail-comments">
         <h2 class="rf-section-title"><RfIconComment /> {{ $t('Comments ({v0})', { v0: comments.length }) }}</h2>
@@ -175,18 +148,9 @@
         </button>
       </div>
 
-      <!-- Team -->
-      <div class="rf-section rf-detail-team">
-        <h2 class="rf-section-title"><RfIconPeople /> {{ $t('Team Members ({v0})', { v0: team.length }) }}</h2>
-        <div v-if="team.length === 0" class="rf-empty-sm"><p>{{ $t('No team members.') }}</p></div>
-        <div v-else class="rf-team-list">
-          <div v-for="member in team" :key="member.id" class="rf-team-card">
-            <span class="rf-team-user">{{ member.user_id === userId ? 'You' : member.user_id.substring(0, 12) + '...' }}</span>
-            <span :class="['rf-badge', `rf-badge-${member.role}`]">{{ member.role }}</span>
-            <span v-if="member.can_edit" class="rf-badge rf-badge-edit">{{ $t('Can Edit') }}</span>
-          </div>
-        </div>
-      </div>
+      <!-- Team: roles owner / admin / editor / viewer -->
+      <ResearchTeamPanel :project-id="projectId" :user-id="userId" :team="team" :my-role="myRole"
+                         @changed="reloadTeam" />
     </div>
   </div>
 </template>
@@ -197,12 +161,13 @@ import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { useResearchStore } from '@/store/research';
 import { researchService } from '@/services/research.service';
+import ResearchFilesPanel from '@/components/research/ResearchFilesPanel.vue';
+import ResearchTeamPanel from '@/components/research/ResearchTeamPanel.vue';
 import { notificationService } from '@/services/notification.service';
 import type { ProjectComment } from '@/services/research.service';
 import {
   RfIconBack, RfIconFile, RfIconCrown, RfIconEdit, RfIconEye,
-  RfIconUpload, RfIconAttach, RfIconLink, RfIconDownload,
-  RfIconDelete, RfIconComment, RfIconCollab, RfIconPeople
+  RfIconDelete, RfIconComment, RfIconCollab
 } from '@/utils/rf-icons';
 
 const route = useRoute();
@@ -211,7 +176,6 @@ const researchStore = useResearchStore();
 
 const loading = ref(true);
 const saving = ref(false);
-const uploading = ref(false);
 const requestingCollab = ref(false);
 const showEditForm = ref(false);
 
@@ -222,6 +186,21 @@ const team = computed(() => researchStore.currentProjectTeam);
 
 const userId = computed(() => authStore.user?.id || '');
 const projectId = computed(() => route.params.id as string);
+
+/** owner | admin | editor | viewer | '' - the same rules as app 28's utils/projectaccess.py. */
+const myRole = computed(() => {
+  if (!project.value) return '';
+  if (project.value.owner_id === userId.value) return 'owner';
+  const member = team.value.find(t => t.user_id === userId.value);
+  if (!member) return '';
+  const role = String((member as any).role || 'viewer');
+  return role === 'collaborator' ? 'editor' : role;
+});
+const reloadFiles = () => researchStore.loadProjectFiles(projectId.value, userId.value);
+const reloadTeam = async () => {
+  await researchStore.loadProjectTeam(projectId.value, userId.value);
+  await reloadFiles();
+};
 
 const userRole = computed(() => {
   if (!project.value) return '';
@@ -265,10 +244,6 @@ const showCollabSection = computed(() => {
 });
 
 const editForm = ref({ title: '', description: '', publication_year: null as number | null, venue: '', doi: '', keywordsStr: '', access_level: 'private', status: 'draft' });
-const fileInputRef = ref<HTMLInputElement | null>(null);
-const selectedFile = ref<File | null>(null);
-const uploadDesc = ref('');
-const uploadVersion = ref('v1.0');
 const newComment = ref('');
 const editingCommentId = ref('');
 const editCommentText = ref('');
@@ -276,44 +251,8 @@ const collabMessage = ref('');
 
 const formatStatus = (status: string) => ({ draft: 'Draft', published: 'Published', under_review: 'Under Review' }[status] || status);
 const formatDate = (dateStr: string) => { if (!dateStr) return ''; return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }); };
-const formatFileSize = (bytes: number) => { if (!bytes) return '0 B'; if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'; return (bytes / 1048576).toFixed(1) + ' MB'; };
 
-const onFileSelect = (event: Event) => { const target = event.target as HTMLInputElement; selectedFile.value = target.files?.[0] || null; };
 
-const doUpload = async () => {
-  if (!selectedFile.value || !userId.value) return;
-  uploading.value = true;
-  try {
-    await researchStore.uploadFile(projectId.value, userId.value, selectedFile.value, uploadDesc.value, uploadVersion.value);
-    selectedFile.value = null; uploadDesc.value = ''; uploadVersion.value = 'v1.0';
-    if (fileInputRef.value) fileInputRef.value.value = '';
-    alert('File uploaded successfully!');
-  } catch (err: any) { alert(err.message || 'Upload failed'); } finally { uploading.value = false; }
-};
-
-const fetchFileAsBlob = async (fileId: string): Promise<Blob | null> => {
-  try {
-    const { url } = await researchService.getFileDownloadInfo(fileId, userId.value);
-    const token = import.meta.env.VITE_AUTH_TOKEN;
-    const response = await fetch(url, { headers: { 'Authorization': `Token ${token}`, 'X-User-ID': userId.value } });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.blob();
-  } catch (err) { console.error('Failed to fetch file:', err); return null; }
-};
-
-const openFileInNewTab = async (file: any) => {
-  const blob = await fetchFileAsBlob(file.id);
-  if (blob) { const blobUrl = window.URL.createObjectURL(blob); window.open(blobUrl, '_blank'); setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000); }
-  else { alert('Failed to open file'); }
-};
-
-const downloadFileToDevice = async (file: any) => {
-  const blob = await fetchFileAsBlob(file.id);
-  if (blob) { const blobUrl = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = blobUrl; a.download = file.original_filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(blobUrl); }
-  else { alert('Failed to download file'); }
-};
-
-const removeFile = async (fileId: string) => { if (!confirm('Delete this file?')) return; try { await researchStore.deleteFile(fileId, userId.value); } catch { alert('Failed to delete file'); } };
 /**
  * Post a comment, and tell the rest of the team.
  *

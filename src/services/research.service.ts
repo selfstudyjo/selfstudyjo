@@ -55,7 +55,22 @@ export interface ResearchFile {
     uploaded_at: string;
     is_current: boolean;
     download_url?: string;
+    /** 2026-11-21: any format, stored in GitHub, shared per file. */
+    content_type?: string;
+    access?: ResearchFileAccess;
+    can_edit?: boolean;
+    can_share?: boolean;
+    can_delete?: boolean;
 }
+
+/** Who may see / edit one file - the JSON object stored beside it in GitHub. */
+export interface ResearchFileAccess {
+    owner_id: string;
+    mode: 'project' | 'restricted';
+    users: Record<string, 'viewer' | 'editor'>;
+}
+
+export type ResearchRole = 'owner' | 'admin' | 'editor' | 'viewer';
 
 export interface ProjectComment {
     id: string;
@@ -589,12 +604,14 @@ class ResearchService {
         }
     }
 
-    async uploadFile(projectId: string, userId: string, file: File, description: string = '', version: string = 'v1.0'): Promise<ResearchFile> {
+    async uploadFile(projectId: string, userId: string, file: File, description: string = '', version: string = 'v1.0',
+                     access?: Partial<ResearchFileAccess>): Promise<ResearchFile> {
         const baseUrl = await this.getBaseUrl();
         const formData = new FormData();
         formData.append('file', file);
         formData.append('description', description);
         formData.append('version', version);
+        if (access) formData.append('access', JSON.stringify(access));
 
         return await apiService.post<ResearchFile>(
             baseUrl,
@@ -613,6 +630,26 @@ class ResearchService {
             undefined,
             this.buildHeaders(userId)
         );
+    }
+
+    async setFileAccess(fileId: string, userId: string, access: Partial<ResearchFileAccess>): Promise<ResearchFile> {
+        const baseUrl = await this.getBaseUrl();
+        return await apiService.request<ResearchFile>('PUT', baseUrl, `/api/files/${fileId}/access/`,
+            access, this.buildHeaders(userId));
+    }
+
+    /** Ask the AI a question about the project's files this user can see. */
+    async askAboutFiles(projectId: string, userId: string, question: string, fileIds: string[] = []):
+        Promise<{ answer: string; files: Array<{ id: string; name: string; readable: boolean }> }> {
+        const baseUrl = await this.getBaseUrl();
+        return await apiService.post(baseUrl, `/api/projects/${projectId}/files/ask/`,
+            { question, file_ids: fileIds }, this.buildHeaders(userId));
+    }
+
+    /** Download a file with the token (an <a href> cannot send it). */
+    async downloadFile(fileId: string, userId: string, filename: string): Promise<void> {
+        const baseUrl = await this.getBaseUrl();
+        return this.downloadBlob(`${baseUrl}/api/files/${fileId}/download/`, userId, filename);
     }
 
     async getFileDownloadInfo(fileId: string, userId: string): Promise<{ url: string; baseUrl: string }> {
