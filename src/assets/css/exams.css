@@ -1155,3 +1155,6 @@
   color: var(--sfs-info-text, #7dd3fc);
   font-weight: 600;
 }
+
+/* Per-course permissions: an exam this student may not take (2026-11-21). */
+.exams-page .exam-locked { color: var(--sfs-text-muted, #b8bdd8); font-weight: 600; }

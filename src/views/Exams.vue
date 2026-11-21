@@ -140,7 +140,10 @@
             </div>
           </div>
 
-          <div class="exam-actions">
+          <div v-if="!mayTake(exam)" class="exam-actions">
+            <span class="exam-locked">🔒 {{ $t('Not available to you') }}</span>
+          </div>
+          <div v-else class="exam-actions">
 
             <!-- Schedule or Start button based on status -->
             <template v-if="isAuthenticated">
@@ -229,6 +232,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { examService, isPracticeResult, type Exam, type UserExamResult, type ExamAppointment } from '@/services/exam.service';
 import { notificationService } from '@/services/notification.service';
+import { courseAccessService } from '@/services/courseAccess.service';
+import { canUse, OPEN_ACCESS, type CourseAccess } from '@/utils/courseAccess';
 
 // Import CSS
 import '@/assets/css/exams.css';
@@ -271,6 +276,14 @@ const filteredExams = computed(() => {
 const userId = computed(() => authStore.user?.id);
 const username = computed(() => authStore.user?.username);
 const isAuthenticated = computed(() => authStore.isAuthenticated);
+
+// Per-course permissions (selfstudyadmin -> Courses -> Permissions). The route
+// guard closes /take-exam and /practice-exam; this only explains it on the card.
+const courseAccess = ref<CourseAccess>(OPEN_ACCESS);
+function mayTake(exam: Exam): boolean {
+  return authStore.isAdmin || canUse(courseAccess.value, exam.course_id, 'exams');
+}
+courseAccessService.get(authStore.user?.id).then((a) => { courseAccess.value = a; });
 
 // Watch for authentication changes to reload data
 watch(isAuthenticated, (newVal) => {

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { authGuard, publicOnlyGuard } from './guard';
+import { courseAccessRedirect } from './course-access-guard';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import Home from '../views/Home.vue';
 import Courses from '../views/Courses.vue';
@@ -261,6 +262,14 @@ const routes = [
                 name: 'LessonDetails',
                 component: LessonDetails,
                 meta: { title: 'Lesson', requiresAuth: false }
+            },
+            {
+                // Where the course-access guard sends a student whose course
+                // administrator restricted this part of the course.
+                path: 'locked',
+                name: 'CourseLocked',
+                component: () => import('@/views/CourseLocked.vue'),
+                meta: { title: 'Not available', requiresAuth: false }
             },
             {
                 path: 'course/:courseId/lesson/:lessonId/homework',
@@ -758,6 +767,16 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
     document.title = `${to.meta.title} | Self Study JO`;
+    // Per-course permissions. Skipped for a signed-out visitor on a route that
+    // needs an account: the auth guard sends them to /login first.
+    const { useAuthStore } = await import('@/store/auth');
+    if (!(to.meta.requiresAuth === true && !useAuthStore().isAuthenticated)) {
+        const lockedTo = await courseAccessRedirect(to);
+        if (lockedTo) {
+            next(lockedTo);
+            return;
+        }
+    }
     const isRunbookDetailsRoute = to.name === 'RunbookDetails';
     if (to.meta.publicOnly) {
         publicOnlyGuard(to, from, next);

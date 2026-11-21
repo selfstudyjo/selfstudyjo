@@ -163,12 +163,14 @@
                         -->
                         <h3 class="lesson-title">
                           <router-link
+                            v-if="mayUse('lessons')"
                             :to="`/course/${route.params.id}/lesson/${lesson.external_lesson_id}`"
                             class="lesson-title-link"
                           >{{ $td(lesson) }}</router-link>
+                          <span v-else :title="$t('Not available to you')">🔒 {{ $td(lesson) }}</span>
                         </h3>
                         <div class="lesson-badges">
-                          <div v-if="lesson.hasQuiz && isUserRegistered" class="lesson-badge quiz-badge" @click="navigateToQuiz(lesson)">
+                          <div v-if="lesson.hasQuiz && isUserRegistered && mayUse('quizzes')" class="lesson-badge quiz-badge" @click="navigateToQuiz(lesson)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
                               <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
@@ -205,6 +207,7 @@
                           where the write-up and the discussion are.
                         -->
                         <router-link
+                          v-if="mayUse('lessons')"
                           :to="`/course/${route.params.id}/lesson/${lesson.external_lesson_id}`"
                           class="lesson-link lesson-link--page"
                         >
@@ -243,7 +246,7 @@
                           its Labs entry on the same flag.
                         -->
                         <router-link
-                          v-if="lesson.lab_id && authStore.hasLabAccess"
+                          v-if="lesson.lab_id && authStore.hasLabAccess && mayUse('labs')"
                           :to="labPath(lesson.lab_id, course?.external_course_id || String(route.params.id || ''), lesson.external_lesson_id)"
                           class="lesson-link lesson-link--lab"
                           :title="lesson.lab_title || lesson.lab_id"
@@ -267,7 +270,7 @@
                           those two are references beside it.
                         -->
                         <router-link
-                          v-if="lesson.runbook"
+                          v-if="lesson.runbook && mayUse('runbooks')"
                           :to="`/runbooks/${lesson.runbook.id}`"
                           class="lesson-link lesson-link--runbook"
                           :title="lesson.runbook.title"
@@ -477,6 +480,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { FlaskConical } from 'lucide-vue-next';
 import { courseService, type Course, type Lesson, type Comment, type Homework, type CourseRegistration } from '@/services/course.service';
 import { quizService, type Quiz } from '@/services/quiz.service';
+import { courseAccessService } from '@/services/courseAccess.service';
+import { canUse, OPEN_ACCESS, type CourseAccess, type CourseComponent } from '@/utils/courseAccess';
 import { runbookService, type Runbook } from '@/services/runbook.service';
 import { userService, type UserProfile } from '@/services/user.service';
 import { notificationService } from '@/services/notification.service';
@@ -494,6 +499,14 @@ const log = (...a: any[]) => { if (DEBUG) console.log('[CourseDetails]', ...a); 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+
+// Per-course permissions (selfstudyadmin -> Courses -> Permissions). Hidden
+// links only - the route guard is what actually closes each page.
+const courseAccess = ref<CourseAccess>(OPEN_ACCESS);
+function mayUse(component: CourseComponent): boolean {
+  return authStore.isAdmin || canUse(courseAccess.value, route.params.id, component);
+}
+courseAccessService.get(authStore.user?.id).then((a) => { courseAccess.value = a; });
 
 const course = ref<Course | null>(null);
 const lessons = ref<(Lesson & {
