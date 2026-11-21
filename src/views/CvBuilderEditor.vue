@@ -313,6 +313,7 @@
 
         <div class="card">
           <div class="card-head"><h3>{{ $t('Rewrite the whole CV') }}</h3></div>
+          <CvLengthPicker v-model="cvLengthModel" />
           <p class="card-note">
             {{ $t('The AI sharpens your wording, turns responsibilities into achievements and fixes the grammar. It will not add a job, a date, a degree or a metric you did not write — if it appears to, treat that as a bug and tell us.') }}
           </p>
@@ -394,6 +395,7 @@
       <section v-show="activeTab === 'job'" class="cve-panel">
         <div class="card">
           <div class="card-head"><h3>{{ $t('Match this CV to a job') }}</h3></div>
+          <CvLengthPicker v-model="cvLengthModel" />
           <p class="card-note">
             {{ $t('Paste the job description and the AI rewrites the CV to answer it — writing the posting\'s required skills, tools and technologies into your skills section and into the roles where that work belongs, then rewriting your summary and headline to target the title. Everything it adds is listed below for you to review.') }}
           </p>
@@ -711,12 +713,15 @@
         <p class="hint preview-hint">
           {{ $t('The download is rendered on the server from this same template, so the file matches what you see here. Unsaved edits are included in the download.') }}
         </p>
-        <CvPreview :cv="cv" :spec="currentSpec" :section-titles="sectionTitles" :avatars="avatars" />
+        <p v-if="cvLengthModel === 'concise'" class="card-note">
+          {{ $t('Concise CV: the preview and the download show the one-page version. Your full text is kept - switch back to Detailed to see it.') }}
+        </p>
+        <CvPreview :cv="previewCv" :spec="currentSpec" :section-titles="sectionTitles" :avatars="avatars" />
       </section>
 
       <!-- Sticky preview beside the editor on wide screens -->
       <aside v-if="showSplitPreview" class="cve-side-preview">
-        <CvPreview :cv="cv" :spec="currentSpec" :section-titles="sectionTitles" :avatars="avatars" />
+        <CvPreview :cv="previewCv" :spec="currentSpec" :section-titles="sectionTitles" :avatars="avatars" />
       </aside>
     </div>
 
@@ -771,10 +776,12 @@ import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import CvPhotoStudio from '@/components/cvbuilder/CvPhotoStudio.vue';
 import CvPreview from '@/components/cvbuilder/CvPreview.vue';
+import CvLengthPicker from '@/components/cvbuilder/CvLengthPicker.vue';
+import { conciseView } from '@/utils/cvConcise';
 import CvVoiceRecorder from '@/components/cvbuilder/CvVoiceRecorder.vue';
 import {
   blankEntry, cvBuilderService,
-  type AvatarOption, type CvRecord, type CvSectionKey, type CvTemplate,
+  type AvatarOption, type CvLength, type CvRecord, type CvSectionKey, type CvTemplate,
   type BuildReport, type CvPhotoEdit, type CvReview, type ExportFormat,
   type MatchReport,
   type TailorCoverage,
@@ -924,6 +931,14 @@ const saveLabel = computed(() => {
 });
 
 function markDirty() { dirty.value = true; }
+
+/** Long form / short form for THIS CV. Saved with the record like any setting. */
+const cvLengthModel = computed<CvLength>({
+  get: () => (cv.value?.cv_length === 'concise' ? 'concise' : 'detailed'),
+  set: (value) => { if (cv.value) { cv.value.cv_length = value; markDirty(); } },
+});
+/** What the preview draws: the one-page view for a concise CV, never a trimmed record. */
+const previewCv = computed(() => (cv.value && cv.value.cv_length === 'concise' ? conciseView(cv.value) : cv.value));
 
 function showToast(message: string, type: 'success' | 'error' = 'success') {
   toast.value = message;
@@ -1079,6 +1094,7 @@ async function enhance(asCopy: boolean) {
       tone: enhanceTone.value,
       target_role: enhanceTarget.value,
       as_copy: asCopy,
+      cv_length: cvLengthModel.value,
     });
     if (asCopy) {
       showToast('Enhanced copy created — opening it.');
@@ -1141,6 +1157,7 @@ async function tailor(asCopy: boolean) {
       job_description: jobDescription.value,
       coverage: coverage.value,
       as_copy: asCopy,
+      cv_length: cvLengthModel.value,
     });
     if (asCopy) {
       showToast('Tailored CV created — opening it.');

@@ -235,6 +235,14 @@ export type CvSectionKey =
     | 'certifications' | 'languages' | 'awards' | 'volunteering'
     | 'publications' | 'interests' | 'references';
 
+/**
+ * Long form or short form (2026-11-21). 'detailed' names the tools and skills
+ * used in every role; 'concise' is ONE page, plain high-level bullets, tools
+ * only in Skills. The trim to one page is applied at render time and never
+ * changes the stored CV - see utils/cvConcise.ts and app 33's cvmodel.py.
+ */
+export type CvLength = 'detailed' | 'concise';
+
 export interface CvRecord {
     id: string;
     user_id: string;
@@ -243,6 +251,7 @@ export interface CvRecord {
     accent_color: string;
     font: string;
     language: string;
+    cv_length?: CvLength;
     photo: CvPhoto;
     personal: CvPersonal;
     experience: CvExperience[];
@@ -635,6 +644,7 @@ class CvBuilderService {
     async enhance(userId: string, payload: {
         cv_id?: string; cv?: Partial<CvRecord>; instructions?: string;
         tone?: string; target_role?: string; save?: boolean; as_copy?: boolean;
+        cv_length?: CvLength;
     }): Promise<{ cv: CvRecord; saved: boolean; summary: CvSummary }> {
         const baseUrl = await this.getBaseUrl();
         return apiService.post(baseUrl, '/api/cv/ai/enhance', payload, this.headers(userId));
@@ -644,7 +654,7 @@ class CvBuilderService {
         cv_id?: string; cv?: Partial<CvRecord>; job_description: string;
         /** Defaults to 'full' on the backend — it closes the gaps rather than listing them. */
         coverage?: TailorCoverage;
-        save?: boolean; as_copy?: boolean; title?: string;
+        save?: boolean; as_copy?: boolean; title?: string; cv_length?: CvLength;
     }): Promise<{ cv: CvRecord; saved: boolean; match_report: MatchReport; summary: CvSummary }> {
         const baseUrl = await this.getBaseUrl();
         return apiService.post(baseUrl, '/api/cv/ai/tailor', payload, this.headers(userId));
@@ -662,7 +672,7 @@ class CvBuilderService {
         job_description: string;
         /** Free text about the candidate. Optional - without it the draft is a scaffold. */
         background?: string;
-        title?: string; save?: boolean;
+        title?: string; save?: boolean; cv_length?: CvLength;
     }): Promise<{ cv: CvRecord; saved: boolean; build_report: BuildReport; summary: CvSummary }> {
         const baseUrl = await this.getBaseUrl();
         return apiService.post(baseUrl, '/api/cv/ai/from-job', payload, this.headers(userId));
@@ -670,7 +680,7 @@ class CvBuilderService {
 
     async buildFromVoice(userId: string, payload: {
         transcript: string; notes?: string; title?: string;
-        avatar?: AvatarKind; save?: boolean;
+        avatar?: AvatarKind; save?: boolean; cv_length?: CvLength;
     }): Promise<{ cv: CvRecord; saved: boolean; transcript_words: number }> {
         const baseUrl = await this.getBaseUrl();
         return apiService.post(baseUrl, '/api/cv/ai/voice', payload, this.headers(userId));

@@ -52,6 +52,9 @@
       </div>
     </section>
 
+    <!-- ═══ Long form or short form, asked before the AI writes anything ═══ -->
+    <CvLengthPicker v-model="cvLength" class="cvb-length" />
+
     <!-- ═══ Creation paths ═══ -->
     <section class="cvb-paths">
       <!-- Upload -->
@@ -339,15 +342,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import CvVoiceRecorder from '@/components/cvbuilder/CvVoiceRecorder.vue';
+import CvLengthPicker from '@/components/cvbuilder/CvLengthPicker.vue';
 import BulkDeleteBar from '@/components/BulkDeleteBar.vue';
 import { useBulkSelection } from '@/composables/useBulkSelection';
 import {
   cvBuilderService,
-  type CvDashboard, type CvSummary, type CvTemplate, type ExportFormat,
+  type CvDashboard, type CvLength, type CvSummary, type CvTemplate, type ExportFormat,
 } from '@/services/cvbuilder.service';
 
 const router = useRouter();
@@ -371,6 +375,15 @@ const uploadError = ref('');
 const uploadText = ref('');
 
 const showVoice = ref(false);
+
+// The CV type the AI builds - remembered, because a user making five CVs for
+// five jobs usually wants the same kind each time.
+const CV_LENGTH_KEY = 'sfs-cv-length';
+function readLength(): CvLength {
+  try { return localStorage.getItem(CV_LENGTH_KEY) === 'concise' ? 'concise' : 'detailed'; } catch { return 'detailed'; }
+}
+const cvLength = ref<CvLength>(readLength());
+watch(cvLength, (v) => { try { localStorage.setItem(CV_LENGTH_KEY, v); } catch { /* storage off */ } });
 const voiceTranscript = ref('');
 const voiceNotes = ref('');
 const buildingVoice = ref(false);
@@ -539,6 +552,7 @@ async function buildFromVoice() {
     const result = await cvBuilderService.buildFromVoice(userId.value, {
       transcript: voiceTranscript.value,
       notes: voiceNotes.value,
+      cv_length: cvLength.value,
     });
     showToast('Your CV is written. Add a photo and pick a template next.');
     open(result.cv.id);
@@ -572,6 +586,7 @@ async function buildFromJob() {
     const result = await cvBuilderService.buildFromJob(userId.value, {
       job_description: jobText.value,
       background: jobBackground.value,
+      cv_length: cvLength.value,
     });
     const holes = result.build_report?.placeholder_count ?? 0;
     showToast(holes
