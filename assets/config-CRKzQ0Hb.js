@@ -1,1 +1,0 @@
-import{Ir as e}from"./index-B251LmwA.js";export{e as serviceRegistry};

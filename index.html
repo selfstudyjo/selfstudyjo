@@ -46,36 +46,41 @@
     <!--
       Deep-link bootstrap.
 
-      Outward-facing share links are plain paths (/certificate/<id>/<type>)
-      rather than hash routes: social networks decode a prefilled message a
-      second time and then re-parse it, which truncates the text at the first
-      '&' and swallows everything after the first '#'. A path-only URL has
-      neither character, so it survives intact.
+      The router uses clean paths (/exams, not /#/exams) since 2026-11-21.
+      GitHub Pages answers a deep path with 404.html, which the build makes a
+      copy of this file, so the path reaches the router unchanged.
 
-      GitHub Pages answers those paths with 404.html, so translate the path
-      back into the hash route here — before the router module evaluates.
+      Two translations happen here, before the router module evaluates:
+      - a LEGACY hash link (/#/exams, from old bookmarks, emails and stored
+        notifications) is rewritten to its clean path, so nothing already sent
+        breaks;
+      - the share-friendly certificate path /certificate/<id>/<type> becomes
+        the route /certificate/<id>?type=<type>. Share links stay path-only
+        because social networks re-parse a prefilled message and cut it at the
+        first '&' or '#'.
     -->
     <script>
       (function () {
         var stored = sessionStorage.getItem('redirect');
         if (stored) sessionStorage.removeItem('redirect');
-
         var loc = stored ? new URL(stored, location.origin) : location;
-        if (loc.hash) return;
 
-        var path = loc.pathname.replace(/\/+$/, '');
-        if (!path) return;
+        var route;
+        if (loc.hash && loc.hash.indexOf('#/') === 0) {
+          route = loc.hash.slice(1);
+        } else {
+          route = loc.pathname + loc.search + (loc.hash || '');
+        }
+        var cert = route.match(/^\/certificate\/([^/?#]+)\/(course|exam)\/?$/i);
+        if (cert) route = '/certificate/' + cert[1] + '?type=' + cert[2].toLowerCase();
 
-        var cert = path.match(/^\/certificate\/([^/]+)\/(course|exam)$/i);
-        var route = cert
-          ? '/certificate/' + cert[1] + '?type=' + cert[2].toLowerCase()
-          : path + loc.search;
-
-        history.replaceState(null, '', location.origin + '/#' + route);
+        if (route !== location.pathname + location.search + location.hash) {
+          history.replaceState(null, '', location.origin + route);
+        }
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-B251LmwA.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DXVI2wxB.css">
+    <script type="module" crossorigin src="/assets/index-B3cE6dJq.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DbQ7pEJz.css">
   </head>
   <!--
     The earliest possible paint for the body. The `!important` was removed with
@@ -84,6 +89,6 @@
     a light theme was pinned to near-black until the first stylesheet landed.
   -->
   <body style="background:#03030f; margin:0; padding:0;">
-    <div id="app"></div>
+    <div id="app"></div>
   </body>
 </html>
