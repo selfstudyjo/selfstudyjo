@@ -646,12 +646,32 @@ const catalogue = computed<Array<{
     privacy: t('Connections and data stay on your computer. The AI is sent table and column names, never your rows, unless you paste them into a question.'),
   },
   {
+    id: 'jobs-helper' as ProductId,
+    name: 'Self-Study Jobs Helper',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t('One profile for every job site. Import your CV, sign in once to Indeed, LinkedIn, Glassdoor and seven more sites, then search and apply by hand or on a schedule, with a report of every application.'),
+    features: [
+      { title: t('Profile from your CV'), text: t('Import a PDF or Word CV and the AI fills your profile: contact details, experience, education, skills, and the answers forms always ask. Or make an ATS-friendly resume PDF from the profile.') },
+      { title: t('Easy Apply and employer sites'), text: t('Fills LinkedIn Easy Apply, Indeed Apply and the employer\'s own application pages step by step, uploads your resume and presses Next and Submit. Test mode fills everything without sending.') },
+      { title: t('Scheduled auto-apply'), text: t('Choose job titles, places and sites, and how often: every day, every week or every few hours. Everything is checked before a run, so it never stops to ask you.') },
+      { title: t('Reports you can read'), text: t('Every application with its result, and the reason when one could not be finished. A weekly report, CSV export, and the questions waiting for your answer.') },
+      { title: t('You stay in control'), text: t('You sign in to each site in its own window and type your passwords and codes yourself. The app asks you when a site needs you, and keeps a daily limit.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('8 GB of memory recommended to run the AI on your own computer.'),
+      t('Accounts on the job sites you want to use. Most job sites do not allow automated applying in their terms: keep the daily number low.'),
+      t('The download comes with a paid AI plan. The app needs no account: signing in only adds the Self-Study online AI.'),
+    ],
+    privacy: t('Your profile, resume, answers, site sign-ins and reports stay on your computer. The online AI receives only the question being answered and your profile text; with the AI on your computer nothing is sent.'),
+  },
+  {
     id: 'app-store' as ProductId,
     name: 'SelfStudy App Store',
     eyebrow: t('Desktop app · Windows, macOS and Linux'),
     lead: t('One app to install and update every SelfStudy desktop app. It picks the right installer for your computer by itself.'),
     features: [
-      { title: t('Every app in one place'), text: t('Office, the Text Editor, Studio DB, SelfStudyCode, Interview Helper, Video Editor, Protection, Browser, VPN and WiFi Connect.') },
+      { title: t('Every app in one place'), text: t('Office, the Text Editor, Studio DB, Jobs Helper, SelfStudyCode, Interview Helper, Video Editor, Protection, Browser, VPN and WiFi Connect.') },
       { title: t('The right file for your computer'), text: t('Windows, macOS for Intel or Apple Silicon, or Linux: the store downloads the build made for your system.') },
       { title: t('Install with one click'), text: t('See the download progress, install, open and remove apps without searching for files.') },
       { title: t('Always up to date'), text: t('The store checks for new versions and updates your apps, and itself, when you allow it.') },
@@ -768,7 +788,7 @@ const wifiSteps = computed(() => [
 
 // The four apps built on the shared desktop kit install the same way; only the file
 // name (artifactName in each package.json) differs.
-const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'app-store': 'SelfStudy-App-Store' };
+const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'jobs-helper': 'SelfStudy-Jobs-Helper', 'app-store': 'SelfStudy-App-Store' };
 const kitSteps = (id: string) => [
   { os: 'windows', format: '.exe / .msi', commands: [] as string[], steps: [
     t('Download the .exe installer (or the .msi) and run it.'),

@@ -58,7 +58,7 @@ export function hasPaidAiPlan(subs: unknown[]): boolean {
         && ((s?.subscription_type?.features || []) as any[]).some((f) => (f?.name ?? f) === 'ai_feature'));
 }
 
-export const PRODUCT_IDS = ['selfstudycode', 'interview-helper', 'video-editor', 'protection', 'browser', 'vpn', 'wifi', 'office', 'editor', 'studio-db', 'app-store'] as const;
+export const PRODUCT_IDS = ['selfstudycode', 'interview-helper', 'video-editor', 'protection', 'browser', 'vpn', 'wifi', 'office', 'editor', 'studio-db', 'jobs-helper', 'app-store'] as const;
 export type ProductId = typeof PRODUCT_IDS[number];
 
 export type OsId = 'windows' | 'macos' | 'linux' | 'other';
