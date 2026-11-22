@@ -331,9 +331,11 @@ Done. The total now rounds to 2 decimals.</pre>
         </article>
       </div>
 
-      <h3 id="prod-lm-models" class="prod-lm__h">{{ $t('The models') }}</h3>
+      <template v-for="g in lmTables" :key="g.id">
+      <h3 :id="g.id" class="prod-lm__h">{{ g.title }}</h3>
+      <p v-if="g.lead" class="prod-lead">{{ g.lead }}</p>
       <div class="prod-lm__models">
-        <table class="prod-lm__table" role="table" aria-labelledby="prod-lm-models">
+        <table class="prod-lm__table" role="table" :aria-labelledby="g.id">
           <thead role="rowgroup">
             <tr role="row">
               <th scope="col" role="columnheader">{{ $t('Model') }}</th>
@@ -344,7 +346,7 @@ Done. The total now rounds to 2 decimals.</pre>
             </tr>
           </thead>
           <tbody role="rowgroup">
-            <tr v-for="m in lmRows" :key="m.id" role="row">
+            <tr v-for="m in g.rows" :key="m.id" role="row">
               <th scope="row" role="rowheader">
                 <span class="prod-lm__name" dir="ltr">{{ m.name }}</span>
                 <span v-if="m.recommended" class="prod-lm__rec">{{ $t('Recommended') }}</span>
@@ -377,6 +379,7 @@ Done. The total now rounds to 2 decimals.</pre>
           </tbody>
         </table>
       </div>
+      </template>
     </section>
   </div>
 </template>
@@ -390,7 +393,7 @@ import { ApiError } from '@/services/api';
 import { productsService } from '@/services/products.service';
 import HelperGuide from '@/components/interviewhelper/HelperGuide.vue';
 import {
-  CLI_ROUTE_INFO, PRODUCT_IDS, SELFSTUDY_LM, assetDetail, cliInstallCommands, cliRoutesFor, detectOs,
+  CLI_ROUTE_INFO, PRODUCT_IDS, SELFSTUDY_LM, SELFSTUDY_LM_EXTRA, assetDetail, cliInstallCommands, cliRoutesFor, detectOs,
   formatSize, groupByOs, isProductId, pickAssets, releaseDate, tabFromQuery,
   type CliRoute, type Detected, type DownloadAsset, type ProductId, type ProductInfo,
 } from '@/utils/products';
@@ -845,8 +848,23 @@ const lmUse = computed<Record<string, string>>(() => ({
   'selfstudy-lm-max': t('The strongest: agentic coding, long projects and data analysis. A mixture of experts, fast for its size.'),
   'selfstudy-speech': t('Speech to text in 99 languages, in the Video Editor: voice commands, captions and transcripts.'),
   'selfstudy-image': t('Pictures from a description, in SelfStudyCode: illustrations, backgrounds and thumbnails.'),
+  // the optional models (tier 'extra'), offered in every desktop app with AI
+  'selfstudy-bolt': t('Fast answers, tool use and pictures on an 8 GB laptop.'),
+  'selfstudy-coder': t('An agentic coding model: writes, runs, tests and fixes code. Also reads screenshots.'),
+  'selfstudy-vision-12b': t('Strong reasoning, writing and coding, and it understands images, charts and scanned pages.'),
+  'selfstudy-agent': t('Built for reasoning, tool calling and agent tasks. Text only.'),
+  'gemma-4-vision': t('Screenshots, charts, scanned pages and tables.'),
+  'qwen3.8-27b': t('A dense model: higher quality than SelfStudy LM Max, slower on a processor. Best with a graphics card.'),
+  'qwen3-coder-30b-a3b': t('A coding specialist. Text only.'),
+  'selfstudy-coder-max': t('The strongest coding agent a PC can run: long projects, multi-file changes, terminal work.'),
+  'selfstudy-coder-ultra': t('A workstation coding agent with a very long context, close to the best online coders.'),
 }));
 const lmRows = computed(() => SELFSTUDY_LM.map((m) => ({ ...m, use: lmUse.value[m.id] || '' })));
+const lmExtraRows = computed(() => SELFSTUDY_LM_EXTRA.map((m) => ({ ...m, use: lmUse.value[m.id] || '' })));
+const lmTables = computed(() => [
+  { id: 'prod-lm-models', title: t('The models'), lead: '', rows: lmRows.value },
+  { id: 'prod-lm-more', title: t('More free models'), lead: t('Strong open models for coding, agents and images, free to download and run on your own computer in every SelfStudy desktop app with AI: open Settings, then Local AI. They are bigger, so choose one that fits your computer’s memory.'), rows: lmExtraRows.value },
+]);
 
 function selectTab(id: ProductId) {
   tab.value = id;

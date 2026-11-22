@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-    CLI_INSTALL_MENU, CLI_ROUTES, CLI_ROUTE_INFO, PRODUCT_IDS, SELFSTUDY_LM, assetDetail, cliInstallCommands, cliRouteOf,
+    CLI_INSTALL_MENU, CLI_ROUTES, CLI_ROUTE_INFO, PRODUCT_IDS, SELFSTUDY_LM, SELFSTUDY_LM_EXTRA, assetDetail, cliInstallCommands, cliRouteOf,
     cliRoutesFor, detectOs, formatSize, gbFigures, groupByOs, isProductId, pickAssets, releaseDate,
     tabFromQuery, isPaidSubscription, hasPaidAiPlan,
 } from '@/utils/products';
@@ -162,7 +162,8 @@ check('the visitor\'s own route is marked in words, not by the border colour alo
 check('SelfStudy LM is a section of the page, drawn from SELFSTUDY_LM',
     /<section class="prod-lm"/.test(vue) && /SELFSTUDY_LM\.map/.test(vue));
 check('every SelfStudy LM model has its "what it is for" line',
-    SELFSTUDY_LM.every((m) => vue.includes(`'${m.id}': t(`)), SELFSTUDY_LM.filter((m) => !vue.includes(`'${m.id}': t(`)).map((m) => m.id));
+    [...SELFSTUDY_LM, ...SELFSTUDY_LM_EXTRA].every((m) => vue.includes(`'${m.id}': t(`)), [...SELFSTUDY_LM, ...SELFSTUDY_LM_EXTRA].filter((m) => !vue.includes(`'${m.id}': t(`)).map((m) => m.id));
+check('the optional models are a second table, drawn from SELFSTUDY_LM_EXTRA', /SELFSTUDY_LM_EXTRA\.map/.test(vue) && /v-for="g in lmTables"/.test(vue));
 check('model names, bases, sizes, memory and licences are bidi-isolated',
     ['name', 'base', 'smaller', 'size', 'ram', 'licence'].every((f) => new RegExp(`dir="ltr">\\{\\{ m\\.${f} \\}\\}`).test(vue)),
     ['name', 'base', 'smaller', 'size', 'ram', 'licence'].filter((f) => !new RegExp(`dir="ltr">\\{\\{ m\\.${f} \\}\\}`).test(vue)));
@@ -322,7 +323,15 @@ if (suite) {
     const listed = suite.models.filter((m) => m.tier !== 'extra' && m.id !== 'selfstudy-embed').map((m) => m.id).sort();
     check('the table lists every suite model an app runs, except the SelfStudyCode-only extras',
         JSON.stringify([...lmIds].sort()) === JSON.stringify(listed), listed);
-    for (const m of SELFSTUDY_LM) {
+    const extras = suite.models.filter((m) => m.tier === 'extra').map((m) => m.id).sort();
+    check('the second table lists every optional (extra) suite model',
+        JSON.stringify(SELFSTUDY_LM_EXTRA.map((m) => m.id).sort()) === JSON.stringify(extras), extras);
+    check('the optional models are listed smallest download first',
+        SELFSTUDY_LM_EXTRA.every((m, i) => i === 0 || gbFigures(m.size)[0] > gbFigures(SELFSTUDY_LM_EXTRA[i - 1].size)[0]));
+    check('every optional model names its memory, and no two ids repeat across both tables',
+        SELFSTUDY_LM_EXTRA.every((m) => !!m.ram && gbFigures(m.ram).length > 0)
+        && new Set([...lmIds, ...SELFSTUDY_LM_EXTRA.map((m) => m.id)]).size === lmIds.length + SELFSTUDY_LM_EXTRA.length);
+    for (const m of [...SELFSTUDY_LM, ...SELFSTUDY_LM_EXTRA]) {
         const s = suite.models.find((x) => x.id === m.id);
         if (!s) { check(`${m.id} is in the suite`, false); continue; }
         const largest = Math.max(...s.variants.map(bytesOf));

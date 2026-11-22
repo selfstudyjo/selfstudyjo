@@ -333,8 +333,8 @@ export function cliRoutesFor(os: OsId, recommended?: Pick<DownloadAsset, 'name' 
  *
  * These are open models, packaged rather than trained: the weights are the base
  * models' own (selfstudy-lm/MODEL_CARD.md), which the page says plainly. The
- * suite's extras (tier 'extra': Gemma 4 Vision, Qwen3.8 27B, Qwen3-Coder) are
- * SelfStudyCode-only add-ons and deliberately not listed.
+ * suite's extras (tier 'extra') are the optional bigger models: they are in
+ * SELFSTUDY_LM_EXTRA below, a second table, checked against the suite the same way.
  */
 export type LmKind = 'llm' | 'speech' | 'image' | 'embed';
 
@@ -360,6 +360,24 @@ export const SELFSTUDY_LM: readonly LmModel[] = [
     { id: 'selfstudy-lm-max', name: 'SelfStudy LM Max', kind: 'llm', base: 'Qwen3.6-35B-A3B', size: '18.6 GB', ram: '24–32 GB', licence: 'Apache-2.0' },
     { id: 'selfstudy-speech', name: 'SelfStudy Speech', kind: 'speech', base: 'Whisper small / base', size: '0.25 GB', ram: '', licence: 'Apache-2.0' },
     { id: 'selfstudy-image', name: 'SelfStudy Image', kind: 'image', base: 'FLUX.2 [klein] 4B + Qwen3-4B', size: '5.3 GB', ram: '8 GB+', licence: 'Apache-2.0', gpuHelps: true },
+];
+
+/**
+ * The suite's optional models (tier 'extra', SelfStudy LM 2026.11.1): never suggested
+ * on their own, offered in every desktop app with AI, downloaded from Hugging Face.
+ * Same rules as SELFSTUDY_LM (check:products compares them with suite.json), ordered
+ * by download size.
+ */
+export const SELFSTUDY_LM_EXTRA: readonly LmModel[] = [
+    { id: 'selfstudy-bolt', name: 'SelfStudy Bolt', kind: 'llm', base: 'NVIDIA-Nemotron-3.5-Bolt-E4B', size: '6.1 GB', ram: '8 GB', licence: 'OpenMDW-1.1' },
+    { id: 'selfstudy-coder', name: 'SelfStudy Coder', kind: 'llm', base: 'Ornith-1.5-9B', size: '6.7 GB', ram: '16 GB', licence: 'MIT' },
+    { id: 'selfstudy-vision-12b', name: 'SelfStudy Vision 12B', kind: 'llm', base: 'Gemma 4 12B', size: '7.3 GB', ram: '12–16 GB', licence: 'Apache-2.0' },
+    { id: 'selfstudy-agent', name: 'SelfStudy Agent', kind: 'llm', base: 'gpt-oss-20b', size: '11.6 GB', ram: '16 GB', licence: 'Apache-2.0' },
+    { id: 'gemma-4-vision', name: 'Gemma 4 Vision', kind: 'llm', base: 'Gemma 4 26B-A4B', smaller: 'gemma-4-E4B · 6.0 GB', size: '14.8 GB', ram: '24 GB', licence: 'Apache-2.0' },
+    { id: 'qwen3.8-27b', name: 'Qwen3.8 27B (dense)', kind: 'llm', base: 'Qwen3.8-27B', size: '17.4 GB', ram: '32 GB', licence: 'Apache-2.0', gpuHelps: true },
+    { id: 'qwen3-coder-30b-a3b', name: 'Qwen3-Coder 30B-A3B', kind: 'llm', base: 'Qwen3-Coder-30B-A3B-Instruct', size: '18.6 GB', ram: '24–32 GB', licence: 'Apache-2.0' },
+    { id: 'selfstudy-coder-max', name: 'SelfStudy Coder Max', kind: 'llm', base: 'Ornith-1.5-35B-A3B', size: '22.6 GB', ram: '24–32 GB', licence: 'MIT' },
+    { id: 'selfstudy-coder-ultra', name: 'SelfStudy Coder Ultra', kind: 'llm', base: 'Qwen3-Coder-Next', size: '38.4 GB', ram: '48–64 GB', licence: 'Apache-2.0' },
 ];
 
 /** A size or memory label ("1.3 GB", "24–32 GB", "8 GB+") as numbers, for the check. [] when it is not one. */
