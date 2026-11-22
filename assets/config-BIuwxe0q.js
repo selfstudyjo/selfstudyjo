@@ -1,0 +1,1 @@
+import{Hr as e}from"./index-BTj7Df4k.js";export{e as serviceRegistry};
