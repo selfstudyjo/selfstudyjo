@@ -162,10 +162,37 @@ const SHIM = `<script>(function(){
   document.addEventListener('submit', function(e){
     var f = e.target; if(!f || f.tagName!=='FORM') return;
     e.preventDefault();
-    var data = {};
-    try{ new FormData(f).forEach(function(v,k){ data[k]=v; }); }catch(err){}
-    send({go: f.getAttribute('action') || '',
-          method: (f.getAttribute('method')||'GET').toUpperCase(), data: data});
+    var data = {}, files = [], tooBig = '';
+    // Without enctype="multipart/form-data" a browser sends a file field as
+    // its NAME only - so request.FILES is empty, exactly as on a real server.
+    var multipart = (f.getAttribute('enctype') || '').toLowerCase() === 'multipart/form-data'
+      && (f.getAttribute('method') || 'GET').toUpperCase() === 'POST';
+    function put(k, v){
+      if(!(k in data)){ data[k] = v; return; }
+      if(!Array.isArray(data[k])) data[k] = [data[k]];
+      data[k].push(v);
+    }
+    try{ new FormData(f).forEach(function(v,k){
+      if(typeof File !== 'undefined' && v instanceof File){
+        if(!multipart){ put(k, v.name || ''); return; }
+        if(!v.name) return;
+        if(v.size > 180*1024){ tooBig = v.name; return; }
+        files.push([k, v]);
+      } else { put(k, v); }
+    }); }catch(err){}
+    if(tooBig){ alert('"' + tooBig + '" is larger than 180 KB - the lab browser '
+      + 'uploads small files only. Pick a smaller picture.'); return; }
+    var method = (f.getAttribute('method')||'GET').toUpperCase();
+    function done(){ send({go: f.getAttribute('action') || '', method: method, data: data}); }
+    var left = files.length; if(!left){ done(); return; }
+    files.forEach(function(pair){
+      var r = new FileReader();
+      r.onload = function(){ data[pair[0]] = {__file__: 1, name: pair[1].name,
+        type: pair[1].type || '', size: pair[1].size, data: String(r.result || '')};
+        if(--left === 0) done(); };
+      r.onerror = function(){ if(--left === 0) done(); };
+      r.readAsDataURL(pair[1]);
+    });
   }, true);
 })()<\/script>`;
 
