@@ -697,6 +697,8 @@ const tools: Catalogue = {
     "Arab job sites and freelance work": "مواقع الوظائف العربية والعمل الحر",
     "Bayt.com, Akhtaboot, Forasna, Baaeed, GulfTalent and Tanqeeb for jobs in Jordan, the Gulf and Egypt, in Arabic or English, and freelance projects on Mostaql, Khamsat and Freelancer.com in their own section.": "بيت.كوم وأخطبوط وفرصنا وبعيد وGulfTalent وتنقيب للوظائف في الأردن والخليج ومصر، بالعربية أو الإنجليزية، ومشاريع العمل الحر على مستقل وخمسات وFreelancer.com في قسم خاص بها.",
     "No ads in the way": "لا إعلانات تعيقك",
+    "Company career sites, guided by AI": "مواقع التوظيف الخاصة بالشركات بتوجيه الذكاء الاصطناعي",
+    "When a company's own careers site needs an account, the app creates one, keeps the email and password encrypted on your computer and signs in with it next time. When a page is unusual, the AI reads it and decides what to press.": "عندما يطلب موقع التوظيف الخاص بشركة إنشاء حساب، ينشئ التطبيق الحساب ويحفظ البريد وكلمة المرور مشفرين على جهازك ويسجّل الدخول بهما في المرة القادمة. وعندما تكون الصفحة غير مألوفة، يقرؤها الذكاء الاصطناعي ويقرر ما يجب الضغط عليه.",
     "Ads are blocked and ad pop-ups are closed on every site, so nothing covers the Apply button or the form while the app applies.": "تُحجب الإعلانات وتُغلق النوافذ المنبثقة الإعلانية في كل موقع، فلا يغطي شيء زر التقديم أو النموذج أثناء تقديم التطبيق.",
     "Scheduled auto-apply": "تقديم تلقائي مجدول",
     "Choose job titles, places and sites, and how often: every day, every week or every few hours. Everything is checked before a run, so it never stops to ask you.": "اختر المسميات الوظيفية والأماكن والمواقع وعدد المرات: كل يوم أو كل أسبوع أو كل بضع ساعات. يُفحص كل شيء قبل التشغيل، فلا يتوقف ليسألك.",

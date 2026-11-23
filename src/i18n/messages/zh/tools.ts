@@ -670,6 +670,8 @@ const tools: Catalogue = {
     "Arab job sites and freelance work": "阿拉伯求职网站与自由职业",
     "Bayt.com, Akhtaboot, Forasna, Baaeed, GulfTalent and Tanqeeb for jobs in Jordan, the Gulf and Egypt, in Arabic or English, and freelance projects on Mostaql, Khamsat and Freelancer.com in their own section.": "Bayt.com、Akhtaboot、Forasna、Baaeed、GulfTalent 和 Tanqeeb 提供约旦、海湾地区和埃及的职位（阿拉伯语或英语），Mostaql、Khamsat 和 Freelancer.com 的自由职业项目单独列为一个分区。",
     "No ads in the way": "没有广告干扰",
+    "Company career sites, guided by AI": "公司招聘网站，由 AI 引导",
+    "When a company's own careers site needs an account, the app creates one, keeps the email and password encrypted on your computer and signs in with it next time. When a page is unusual, the AI reads it and decides what to press.": "当公司自己的招聘网站需要账户时，应用会创建账户，将邮箱和密码加密保存在你的电脑上，并在下次用它登录。遇到不常见的页面时，AI 会读取页面并决定点击什么。",
     "Ads are blocked and ad pop-ups are closed on every site, so nothing covers the Apply button or the form while the app applies.": "在每个网站上屏蔽广告并关闭广告弹窗，申请时不会有任何东西挡住申请按钮或表单。",
     "Scheduled auto-apply": "定时自动申请",
     "Choose job titles, places and sites, and how often: every day, every week or every few hours. Everything is checked before a run, so it never stops to ask you.": "选择职位、地点和网站以及频率：每天、每周或每隔几个小时。运行前会检查所有内容，因此不会中途停下来询问你。",
