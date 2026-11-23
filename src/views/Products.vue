@@ -649,10 +649,12 @@ const catalogue = computed<Array<{
     id: 'jobs-helper' as ProductId,
     name: 'Self-Study Jobs Helper',
     eyebrow: t('Desktop app · Windows, macOS and Linux'),
-    lead: t('One profile for every job site. Import your CV, sign in once to Indeed, LinkedIn, Glassdoor and seven more sites, then search and apply by hand or on a schedule, with a report of every application.'),
+    lead: t('One profile for every job site. Import your CV, sign in once to LinkedIn, Indeed, Glassdoor, Bayt, GulfTalent and thirteen more sites, then search and apply by hand or on a schedule, with a report of every application.'),
     features: [
       { title: t('Profile from your CV'), text: t('Import a PDF or Word CV and the AI fills your profile: contact details, experience, education, skills, and the answers forms always ask. Or make an ATS-friendly resume PDF from the profile.') },
       { title: t('Easy Apply and employer sites'), text: t('Fills LinkedIn Easy Apply, Indeed Apply and the employer\'s own application pages step by step, uploads your resume and presses Next and Submit. Test mode fills everything without sending.') },
+      { title: t('Arab job sites and freelance work'), text: t('Bayt.com, Akhtaboot, Forasna, Baaeed, GulfTalent and Tanqeeb for jobs in Jordan, the Gulf and Egypt, in Arabic or English, and freelance projects on Mostaql, Khamsat and Freelancer.com in their own section.') },
+      { title: t('No ads in the way'), text: t('Ads are blocked and ad pop-ups are closed on every site, so nothing covers the Apply button or the form while the app applies.') },
       { title: t('Scheduled auto-apply'), text: t('Choose job titles, places and sites, and how often: every day, every week or every few hours. Everything is checked before a run, so it never stops to ask you.') },
       { title: t('Reports you can read'), text: t('Every application with its result, and the reason when one could not be finished. A weekly report, CSV export, and the questions waiting for your answer.') },
       { title: t('You stay in control'), text: t('You sign in to each site in its own window and type your passwords and codes yourself. The app asks you when a site needs you, and keeps a daily limit.') },
