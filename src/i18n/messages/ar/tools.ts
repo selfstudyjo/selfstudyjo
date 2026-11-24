@@ -758,6 +758,17 @@ const tools: Catalogue = {
     "No booking: the app is your proctor. It watches this session, records every breach and marks the paper. Your result is saved on this computer.": "لا حجز: التطبيق هو المراقب. يراقب هذه الجلسة ويسجّل كل مخالفة ويصحّح الورقة. تُحفظ نتيجتك على هذا الحاسوب.",
     "Your record stays on this computer. Nothing is shared unless you choose to share your results from the desktop menu.": "يبقى سجلّك على هذا الحاسوب. لا يُشارَك أي شيء إلا إذا اخترت مشاركة نتائجك من قائمة التطبيق.",
     "Everything recorded here stays on this computer. Nothing records an answer, a question, or what you copied - a copy is recorded as a number of characters and never as the text.": "كل ما يُسجَّل هنا يبقى على هذا الحاسوب. لا يُسجَّل أي جواب أو سؤال أو ما نسخته - يُسجَّل النسخ كعدد من الأحرف وليس كنص.",
+    "Workspace layout": "تخطيط مساحة العمل",
+    "Stacked": "فوق بعض",
+    "Simulator only": "المحاكي فقط",
+    "Code only": "الكود فقط",
+    "Esc leaves full screen": "اضغط Esc للخروج من ملء الشاشة",
+    "Show the simulator too": "اعرض المحاكي أيضًا",
+    "Maximise the code": "كبّر الكود",
+    "Resize the panes": "غيّر حجم اللوحتين",
+    "Simulator": "المحاكي",
+    "Show the code too": "اعرض الكود أيضًا",
+    "Maximise the simulator": "كبّر المحاكي",
 };
 
 export default tools;

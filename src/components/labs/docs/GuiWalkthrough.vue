@@ -11,15 +11,21 @@
 
     <div class="sgw__grid">
       <div class="sgw__player">
-        <div v-if="webgl" class="sgw__stage">
+        <div v-if="webgl && !flat" class="sgw__stage">
           <canvas ref="canvas" class="sgw__canvas" role="img"
                   :aria-label="$t('Animated walkthrough of the steps in {v0}', { v0: section.product })" />
         </div>
-        <div v-if="webgl" class="sgw__controls">
+        <!-- No WebGL, or the browser took the context away: the same screen, drawn flat
+             for the current step (paintScreen is plain 2D). Never an empty box. -->
+        <div v-else class="sgw__stage sgw__stage--flat">
+          <canvas ref="flatCanvas" class="sgw__canvas" width="1280" height="800" role="img"
+                  :aria-label="$t('Animated walkthrough of the steps in {v0}', { v0: section.product })" />
+        </div>
+        <div class="sgw__controls">
           <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm" :disabled="active === 0" @click="go(active - 1)">
             <ChevronLeft class="sgw__i" aria-hidden="true" /><span class="sgw__sr">{{ $t('Previous step') }}</span>
           </button>
-          <button v-if="!reduced" type="button" class="sl-btn sl-btn--primary sl-btn--sm" @click="toggle">
+          <button v-if="!reduced && !flat" type="button" class="sl-btn sl-btn--primary sl-btn--sm" @click="toggle">
             <Pause v-if="playing" class="sgw__i" aria-hidden="true" />
             <Play v-else class="sgw__i" aria-hidden="true" />
             {{ playing ? $t('Pause') : $t('Play') }}
@@ -31,7 +37,7 @@
           <button type="button" class="sl-btn sl-btn--ghost sl-btn--sm" @click="restart">
             <RotateCcw class="sgw__i" aria-hidden="true" /> {{ $t('Restart') }}
           </button>
-          <label v-if="!reduced" class="sgw__speed">
+          <label v-if="!reduced && !flat" class="sgw__speed">
             {{ $t('Speed') }}
             <select v-model.number="speed">
               <option :value="0.5">0.5×</option>
@@ -77,7 +83,7 @@
  * The product chrome in the steps (button and field labels) is the product's
  * own English, like the portal itself; the sentence around it is the recipe's.
  */
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { CheckCircle2, ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from 'lucide-vue-next';
 import { hasWebGL } from '@/stage3d/loader';
 import type { GuiAction, GuiSection } from '@/utils/labDocs';
@@ -99,7 +105,35 @@ function actionLabel(action: GuiAction): string {
 }
 
 const canvas = ref<HTMLCanvasElement | null>(null);
+const flatCanvas = ref<HTMLCanvasElement | null>(null);
 const webgl = hasWebGL();
+const flat = ref(!webgl);
+let lostTimer = 0;
+let listening: HTMLCanvasElement | null = null;
+function onLost() {
+  window.clearTimeout(lostTimer);
+  lostTimer = window.setTimeout(() => { player?.dispose(); player = null; playing.value = false; flat.value = true; nextTick(paintFlat); }, 2500);
+}
+function onRestored() { window.clearTimeout(lostTimer); flat.value = false; nextTick(build); }
+function listen(el: HTMLCanvasElement | null) {
+  if (listening === el) return;
+  listening?.removeEventListener('sfs-stage-lost', onLost);
+  listening?.removeEventListener('sfs-stage-restored', onRestored);
+  listening = el;
+  el?.addEventListener('sfs-stage-lost', onLost);
+  el?.addEventListener('sfs-stage-restored', onRestored);
+}
+/** The current step on the flat canvas, in its finished state (value typed, target highlighted). */
+async function paintFlat() {
+  const el = flatCanvas.value;
+  const step = props.section.steps[active.value];
+  if (!el || !step) return;
+  try {
+    const mod = await import('@/utils/labDocs3d/walkthroughStage');
+    const ctx = el.getContext('2d');
+    if (ctx) mod.paintScreen(ctx, { step, typed: (step.value || '').length, pressed: true, section: props.section });
+  } catch { /* the step list beside it still says everything */ }
+}
 const reduced = typeof window !== 'undefined' && (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || false);
 const active = ref(0);
 const playing = ref(false);
@@ -111,10 +145,11 @@ async function build() {
   const mine = ++generation;
   player?.dispose();
   player = null;
-  if (!webgl || !canvas.value) return;
+  if (flat.value || !canvas.value) { nextTick(paintFlat); return; }
   try {
     const mod = await import('@/utils/labDocs3d/walkthroughStage');
     if (mine !== generation || !canvas.value) return;
+    listen(canvas.value);
     player = mod.createWalkthrough(canvas.value, props.section, themePalette(), {
       reduced,
       onStep: (i) => { active.value = i; },
@@ -123,7 +158,10 @@ async function build() {
     player.setSpeed(speed.value);
     if (props.autoplay && !reduced) { player.play(); playing.value = true; }
   } catch {
+    // No WebGL context could be had: the flat picture instead of a blank stage.
     player = null;
+    flat.value = true;
+    nextTick(paintFlat);
   }
 }
 
@@ -135,6 +173,7 @@ function toggle() {
 function go(i: number) {
   active.value = Math.max(0, Math.min(props.section.steps.length - 1, i));
   player?.goTo(active.value);
+  if (flat.value) paintFlat();
 }
 function restart() {
   player?.goTo(0);
@@ -145,7 +184,7 @@ function restart() {
 watch(speed, s => player?.setSpeed(s));
 watch(() => props.section, () => { active.value = 0; playing.value = false; build(); });
 onMounted(build);
-onBeforeUnmount(() => { generation += 1; player?.dispose(); });
+onBeforeUnmount(() => { generation += 1; window.clearTimeout(lostTimer); listen(null); player?.dispose(); });
 </script>
 
 <style scoped>

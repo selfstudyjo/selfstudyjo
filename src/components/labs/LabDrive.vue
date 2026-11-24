@@ -911,6 +911,9 @@ void weatherLook;
   gap: 0.6rem;
   min-height: 0;
   height: 100%;
+  /* The info panel moves under the 3D view when THIS pane is narrow (a split studio,
+     a lab column), not only when the window is: a viewport query squeezed the view. */
+  container: sl-drive / inline-size;
 }
 .sl-drive__bar {
   display: flex;
@@ -987,6 +990,10 @@ void weatherLook;
 .sl-drive.is-wide .sl-drive__side { display: none; }
 @media (max-width: 1100px) {
   .sl-drive__body { grid-template-columns: minmax(0, 1fr); }
+}
+@container sl-drive (max-width: 1000px) {
+  .sl-drive__body { grid-template-columns: minmax(0, 1fr); }
+  .sl-drive__side section { max-height: 22rem; }
 }
 .sl-drive__stagewrap { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
 .sl-drive__stage {

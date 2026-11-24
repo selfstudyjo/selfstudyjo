@@ -136,6 +136,19 @@ export function createStage(canvas: HTMLCanvasElement, palette: Palette,
         })
         : null;
     seen?.observe(canvas);
+    // A browser keeps ~16 WebGL contexts and silently drops the oldest (the course cards'
+    // planets, the simulator, other illustrations...). A lost context leaves the canvas
+    // BLANK, which reads as a picture that failed to load. Ask for it back
+    // (preventDefault) and tell the component, which rebuilds on 'sfs-stage-restored' or
+    // shows its 2D fallback if the context does not return.
+    canvas.addEventListener('webglcontextlost', (event) => {
+        event.preventDefault();
+        stop();
+        canvas.dispatchEvent(new CustomEvent('sfs-stage-lost'));
+    }, false);
+    canvas.addEventListener('webglcontextrestored', () => {
+        canvas.dispatchEvent(new CustomEvent('sfs-stage-restored'));
+    }, false);
     resize();
     start();
     return stage;

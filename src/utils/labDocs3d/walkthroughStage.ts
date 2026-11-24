@@ -47,12 +47,6 @@ function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number
     return ctx.measureText(out).width;
 }
 
-function bar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, color = '#e5e7eb') {
-    ctx.fillStyle = color;
-    rr(ctx, x, y - 6, w, 12, 6);
-    ctx.fill();
-}
-
 /**
  * Paint one moment of one step and return where its TARGET is, in canvas
  * pixels. Pure 2D, no three.js - so it is also what a check could drive.
@@ -136,10 +130,21 @@ export function paintScreen(ctx: CanvasRenderingContext2D, paint: Paint): Rect {
         if (isTarget) target = { x: bx, y: 206, w, h: 42 };
         bx += w + 14;
     });
-    // Main content: a list with the target as one row when the step points there.
+    // Main content: a list with the target as one row when the step points there. The
+    // other rows are READABLE sample entries named after the page, never grey bars: a
+    // screen of empty bars reads as a picture that did not load.
+    const noun = sampleNoun(step.screen || section.title);
+    const sample = [0, 1, 2, 3, 4, 5].map((r) => ({
+        name: noun + '-' + String(r + 1).padStart(2, '0'),
+        state: ['Active', 'Available', 'Running', 'Active', 'Ready', 'Available'][r],
+        when: ['Today', 'Today', 'Yesterday', '2 days ago', 'Last week', 'Last week'][r],
+    }));
+    text(ctx, 'Name', left + 22, 264, 16, '#6b7280', 600);
+    text(ctx, 'Status', left + 600, 264, 16, '#6b7280', 600);
+    text(ctx, 'Updated', left + 780, 264, 16, '#6b7280', 600);
     const rows = 6;
     for (let r = 0; r < rows; r += 1) {
-        const y = 290 + r * 66;
+        const y = 300 + r * 66;
         const isTarget = step.zone === 'main' && r === 1;
         ctx.fillStyle = isTarget && paint.pressed ? hexA(brand, 0.12) : '#ffffff';
         rr(ctx, left, y - 26, CW - left - 40, 52, 8); ctx.fill();
@@ -148,19 +153,21 @@ export function paintScreen(ctx: CanvasRenderingContext2D, paint: Paint): Rect {
         ctx.stroke();
         if (isTarget) {
             text(ctx, step.target, left + 22, y, 20, brand, 600, 520);
-            bar(ctx, left + 600, y, 120);
+            text(ctx, sample[r].state, left + 600, y, 18, '#047857', 600, 160);
+            text(ctx, sample[r].when, left + 780, y, 18, '#6b7280', 400, 200);
             target = { x: left, y: y - 26, w: Math.min(560, CW - left - 40), h: 52 };
         } else {
-            bar(ctx, left + 22, y, 180 + ((r * 53) % 90), '#d9dde4');
-            bar(ctx, left + 600, y, 90 + ((r * 37) % 60));
+            text(ctx, sample[r].name, left + 22, y, 19, '#1f2937', 500, 540);
+            text(ctx, sample[r].state, left + 600, y, 18, '#047857', 600, 160);
+            text(ctx, sample[r].when, left + 780, y, 18, '#6b7280', 400, 200);
         }
     }
     // Editor zone: a code surface in the content area.
     if (step.zone === 'editor') {
         ctx.fillStyle = '#1e1e2e';
         rr(ctx, left, 270, CW - left - 40, 380, 10); ctx.fill();
-        const lines = ['', '', ''];
-        lines.forEach((_, i) => bar(ctx, left + 30, 310 + i * 36, 160 + i * 70, '#3b3f54'));
+        const lines = ['# ' + (section.title || section.product), '# ' + (step.screen || ''), ''];
+        lines.forEach((line, i) => text(ctx, line, left + 30, 310 + i * 36, 18, '#7f849c', 400, CW - left - 120));
         text(ctx, (step.action === 'see' ? step.target : shown) + (paint.typed < value.length ? '▌' : ''), left + 30, 310 + 3 * 36, 20, '#a6e3a1', 500, CW - left - 120);
         target = { x: left + 10, y: 280, w: CW - left - 60, h: 360 };
     }
@@ -195,9 +202,15 @@ export function paintScreen(ctx: CanvasRenderingContext2D, paint: Paint): Rect {
                 }
                 target = f;
             }
-            [0, 1].forEach(i => { bar(ctx, box.x + 32, fieldY + 120 + i * 70, 140); bar(ctx, box.x + 32, fieldY + 150 + i * 70, box.w - 64, '#eef0f3'); });
+            ['Description (optional)', 'Tags (optional)'].forEach((label, i) => {
+                text(ctx, label, box.x + 32, fieldY + 120 + i * 70, 16, '#6b7280', 600, box.w - 64);
+                ctx.strokeStyle = '#e1e4ea'; ctx.lineWidth = 2; rr(ctx, box.x + 32, fieldY + 136 + i * 70, box.w - 64, 30, 6); ctx.stroke();
+            });
         } else {
-            [0, 1, 2].forEach(i => { bar(ctx, box.x + 32, fieldY + i * 66, 140); bar(ctx, box.x + 32, fieldY + 28 + i * 66, box.w - 64, '#eef0f3'); });
+            [['Name', noun + '-01'], ['Region', 'Default'], ['Status', 'Ready']].forEach(([k, v], i) => {
+                text(ctx, k, box.x + 32, fieldY + i * 66, 16, '#6b7280', 600, 200);
+                text(ctx, v, box.x + 32, fieldY + 28 + i * 66, 19, '#111827', 500, box.w - 64);
+            });
             ctx.font = '600 19px system-ui, sans-serif';
             const w = Math.min(box.w - 64, ctx.measureText(step.target).width + 44);
             const b: Rect = { x: box.x + box.w - 32 - w, y: box.y + box.h - 76, w, h: 46 };
@@ -215,6 +228,14 @@ export function paintScreen(ctx: CanvasRenderingContext2D, paint: Paint): Rect {
         ctx.stroke();
     }
     return target;
+}
+
+/** A short lower-case noun from a page title, for sample rows: "Your VPCs" -> "vpc". */
+function sampleNoun(title: string): string {
+    const words = String(title || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/)
+        .filter((w) => w.length > 1 && !['your', 'the', 'all', 'my', 'a', 'an', 'of', 'and', 'new', 'list', 'page', 'home', 'console'].includes(w));
+    const w = (words[words.length - 1] || 'item').replace(/s$/, '');
+    return w.slice(0, 18) || 'item';
 }
 
 function hexA(hex: string, alpha: number) {

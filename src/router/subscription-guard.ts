@@ -1,3 +1,4 @@
+import { IS_DESKTOP } from '@/utils/desktop';
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import { subscriptionService } from '@/services/subscription.service';
@@ -8,6 +9,8 @@ export async function subscriptionGuard(
     from: RouteLocationNormalized,
     next: NavigationGuardNext
 ): Promise<void> {
+    // The desktop app (utils/desktop.ts): every feature is included, always - no request.
+    if (IS_DESKTOP) { next(); return; }
     const authStore = useAuthStore();
 
     const requiresSubscription = to.meta.requiresSubscription === true;

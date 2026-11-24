@@ -45,14 +45,42 @@
       <button type="button" class="sds-btn" @click="open">{{ $t('Try again') }}</button>
     </div>
 
-    <div v-else-if="ready" class="sds-body">
+    <div v-else-if="ready" ref="frameEl" class="sds-frame"
+         :class="{ 'is-full': fs.active.value, 'is-overlay': fs.active.value && !fs.native.value }">
+      <!-- The workspace bar: how the two panes share the screen, and full screen. -->
+      <div class="sds-bar" role="toolbar" :aria-label="$t('Workspace layout')">
+        <div class="sds-seg" role="radiogroup" :aria-label="$t('Layout')">
+          <button v-for="mode in layouts" :key="mode.id" type="button" role="radio"
+                  :aria-checked="layout === mode.id" :class="{ 'is-on': layout === mode.id }"
+                  :title="mode.label" @click="setLayout(mode.id)">
+            <component :is="mode.icon" class="sds-i" aria-hidden="true" />
+            <span class="sds-seg__text">{{ mode.label }}</span>
+          </button>
+        </div>
+        <div class="sds-bar__end">
+          <span v-if="fs.active.value" class="sds-bar__hint">{{ $t('Esc leaves full screen') }}</span>
+          <button v-if="!fs.active.value" type="button" class="sds-btn sds-btn--ghost sds-btn--sm" @click="fs.enter()">
+            <Maximize2 class="sds-i" aria-hidden="true" /> {{ $t('Full screen') }}
+          </button>
+          <button v-else type="button" class="sds-btn sds-btn--sm" @click="fs.exit()">
+            <Minimize2 class="sds-i" aria-hidden="true" /> {{ $t('Exit full screen') }}
+          </button>
+        </div>
+      </div>
+
+    <div ref="bodyEl" class="sds-body" :data-layout="layout" :style="{ '--sds-split': split + '%' }">
       <!-- The IDE -->
-      <section class="sds-ide" :aria-label="$t('Code')">
+      <section v-show="layout !== 'sim'" class="sds-ide" :aria-label="$t('Code')">
         <div class="sds-tabs" role="tablist">
           <button v-for="tab in tabs" :key="tab.id" type="button" role="tab"
                   :aria-selected="side === tab.id" :class="{ 'is-on': side === tab.id }"
                   @click="pickSide(tab.id)">
             <component :is="tab.icon" class="sds-i" /> {{ tab.label }}
+          </button>
+          <button type="button" class="sds-max" :title="layout === 'code' ? $t('Show the simulator too') : $t('Maximise the code')"
+                  :aria-label="layout === 'code' ? $t('Show the simulator too') : $t('Maximise the code')"
+                  @click="toggleMax('code')">
+            <component :is="layout === 'code' ? Minimize2 : Maximize2" class="sds-i" aria-hidden="true" />
           </button>
         </div>
 
@@ -101,10 +129,26 @@
         </div>
       </section>
 
+      <!-- The divider: drag (or arrow keys) to give either pane more room. Split view only. -->
+      <div v-if="layout === 'split'" class="sds-split" role="separator" aria-orientation="vertical"
+           :aria-valuenow="Math.round(split)" aria-valuemin="25" aria-valuemax="75" tabindex="0"
+           :aria-label="$t('Resize the panes')" @pointerdown="startDrag" @keydown="nudge"></div>
+
       <!-- The simulator -->
-      <section class="sds-sim" :aria-label="$t('Simulator view')">
-        <LabDrive v-if="driveTool" ref="drive" :key="epoch" :tool-id="driveTool.id" :run="runTool" />
+      <section v-show="layout !== 'code'" class="sds-sim" :aria-label="$t('Simulator view')">
+        <div class="sds-sim__head">
+          <span>{{ $t('Simulator') }}</span>
+          <button type="button" class="sds-max" :title="layout === 'sim' ? $t('Show the code too') : $t('Maximise the simulator')"
+                  :aria-label="layout === 'sim' ? $t('Show the code too') : $t('Maximise the simulator')"
+                  @click="toggleMax('sim')">
+            <component :is="layout === 'sim' ? Minimize2 : Maximize2" class="sds-i" aria-hidden="true" />
+          </button>
+        </div>
+        <div class="sds-sim__body">
+          <LabDrive v-if="driveTool" ref="drive" :key="epoch" :tool-id="driveTool.id" :run="runTool" />
+        </div>
       </section>
+    </div>
     </div>
 
     <!-- Reset: a plain confirm in the page, not a modal layer of its own. -->
@@ -121,11 +165,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref } from 'vue';
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import {
-  BookOpen, Bot, Car, Code2, FlaskConical, Loader2, RotateCcw,
-  SquareTerminal, Terminal,
+  BookOpen, Bot, Car, Code2, Columns2, FlaskConical, Loader2, Maximize2, Minimize2, MonitorPlay, RotateCcw,
+  Rows2, SquareTerminal, Terminal,
 } from 'lucide-vue-next';
+import { useFullscreen } from '@/composables/useFullscreen';
 import { useAuthStore } from '@/store/auth';
 import { useI18n } from '@/i18n/runtime';
 import { labsService } from '@/services/labs.service';
@@ -150,6 +195,80 @@ const tabs = computed(() => [
   { id: 'ai' as Side, label: t('AI helper'), icon: Bot },
   { id: 'guide' as Side, label: t('Guide'), icon: BookOpen },
 ]);
+
+/*
+  The layout. The simulator and the editor used to share the page in whatever room the
+  grid left them (stacked under 1800px, both squeezed above it), with no full screen.
+  Now the student chooses: side by side with a draggable divider, stacked, or one pane
+  maximised - and the whole workspace can go full screen (useFullscreen: native API,
+  fixed overlay where refused, Escape leaves). Both choices are remembered.
+*/
+type Layout = 'split' | 'stack' | 'sim' | 'code';
+const LAYOUT_KEY = 'sfs-sds-layout';
+const SPLIT_KEY = 'sfs-sds-split';
+const layouts = computed(() => [
+  { id: 'split' as Layout, label: t('Side by side'), icon: Columns2 },
+  { id: 'stack' as Layout, label: t('Stacked'), icon: Rows2 },
+  { id: 'sim' as Layout, label: t('Simulator only'), icon: MonitorPlay },
+  { id: 'code' as Layout, label: t('Code only'), icon: Code2 },
+]);
+function storedLayout(): Layout {
+  try {
+    const v = localStorage.getItem(LAYOUT_KEY);
+    if (v === 'split' || v === 'stack' || v === 'sim' || v === 'code') return v;
+  } catch { /* private mode */ }
+  return typeof window !== 'undefined' && window.innerWidth >= 1200 ? 'split' : 'stack';
+}
+function storedSplit(): number {
+  try { const n = Number(localStorage.getItem(SPLIT_KEY)); if (n >= 25 && n <= 75) return n; } catch { /* private mode */ }
+  return 42;
+}
+const layout = ref<Layout>(storedLayout());
+const split = ref<number>(storedSplit());
+const lastPair = ref<Layout>(layout.value === 'stack' ? 'stack' : 'split');
+const frameEl = ref<HTMLElement | null>(null);
+const bodyEl = ref<HTMLElement | null>(null);
+const fs = useFullscreen(frameEl);
+
+function setLayout(mode: Layout) {
+  layout.value = mode;
+  if (mode === 'split' || mode === 'stack') lastPair.value = mode;
+  try { localStorage.setItem(LAYOUT_KEY, mode); } catch { /* private mode */ }
+}
+function toggleMax(pane: 'sim' | 'code') { setLayout(layout.value === pane ? lastPair.value : pane); }
+function saveSplit() { try { localStorage.setItem(SPLIT_KEY, String(Math.round(split.value))); } catch { /* private mode */ } }
+
+let dragStop: (() => void) | null = null;
+function startDrag(event: PointerEvent) {
+  const body = bodyEl.value;
+  if (!body) return;
+  event.preventDefault();
+  const rect = body.getBoundingClientRect();
+  const rtl = getComputedStyle(body).direction === 'rtl';
+  const move = (e: PointerEvent) => {
+    let pct = ((e.clientX - rect.left) / rect.width) * 100;
+    if (rtl) pct = 100 - pct;
+    split.value = Math.min(75, Math.max(25, pct));
+  };
+  const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); document.body.classList.remove('sds-dragging'); saveSplit(); dragStop = null; };
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+  document.body.classList.add('sds-dragging');
+  dragStop = up;
+}
+function nudge(event: KeyboardEvent) {
+  const step = event.shiftKey ? 10 : 3;
+  if (event.key === 'ArrowLeft') split.value = Math.max(25, split.value - step);
+  else if (event.key === 'ArrowRight') split.value = Math.min(75, split.value + step);
+  else if (event.key === 'Home') split.value = 25;
+  else if (event.key === 'End') split.value = 75;
+  else return;
+  event.preventDefault();
+  saveSplit();
+}
+// The 3D view measures its own box: after a layout change or full screen, let it re-measure.
+watch([layout, () => fs.active.value], () => { nextTick(() => requestAnimationFrame(() => window.dispatchEvent(new Event('resize')))); });
+onBeforeUnmount(() => { if (dragStop) dragStop(); });
 
 const authStore = useAuthStore();
 const { t } = useI18n();
@@ -325,31 +444,87 @@ onMounted(open);
 }
 .sds-state.is-error p { color: var(--sfs-danger-text, #ff8a8a); }
 
+/* The workspace frame: the bar, then the panes. It is what goes full screen. */
+.sds-frame { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.sds-frame.is-full {
+  height: 100%; padding: 0.75rem; box-sizing: border-box;
+  background: var(--sfs-space, #070b14);
+}
+.sds-frame.is-overlay { position: fixed; inset: 0; z-index: 2147483000; height: 100dvh; }
+
+.sds-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem;
+}
+.sds-bar__end { display: flex; align-items: center; gap: 0.6rem; }
+.sds-bar__hint { font-size: 0.82rem; color: var(--sfs-text-muted, #b4bccb); }
+.sds-seg {
+  display: inline-flex; padding: 0.2rem; gap: 0.2rem; border-radius: 10px;
+  background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.14);
+}
+.sds-seg button {
+  display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.7rem; min-height: 2.25rem;
+  border: 0; border-radius: 8px; cursor: pointer; font: inherit; font-size: 0.88rem; font-weight: 600;
+  background: transparent; color: var(--sfs-text-muted, #b4bccb);
+}
+.sds-seg button:hover { color: var(--sfs-text, #e8edf5); }
+.sds-seg button.is-on { background: var(--sfs-accent, #667eea); color: var(--sfs-on-accent, #ffffff); }
+.sds-btn--sm { min-height: 2.25rem; padding: 0.35rem 0.75rem; font-size: 0.88rem; }
+@media (max-width: 720px) { .sds-seg__text { display: none; } }
+
 /*
-  The simulator on top and the IDE full width under it. Side by side only on a
-  very wide screen: the 3D pane carries its own run panel and the editor needs
-  room for a file tree AND a buffer, so at 1440px both halves were squeezed.
+  The panes. Each one has a fixed share of a bounded height and scrolls INSIDE itself,
+  so nothing spills over the other pane and the page never grows two screens tall.
 */
 .sds-body {
-  display: grid;
+  --sds-h: clamp(30rem, calc(100dvh - 12rem), 60rem);
+  display: grid; gap: 0.75rem; min-height: 0;
   grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
-  align-items: start;
 }
-.sds-sim { order: -1; }
-@media (min-width: 1800px) {
-  .sds-body { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
-  .sds-sim { order: 0; }
+.sds-body[data-layout='split'] {
+  grid-template-columns: minmax(0, calc(var(--sds-split) - 0.5rem)) 0.75rem minmax(0, 1fr);
+  gap: 0; height: var(--sds-h);
 }
+.sds-body[data-layout='split'] .sds-ide { order: 0; }
+.sds-body[data-layout='split'] .sds-sim { order: 2; }
+.sds-body[data-layout='stack'] .sds-sim { order: -1; height: min(42rem, 70dvh); }
+.sds-body[data-layout='stack'] .sds-ide { height: min(40rem, 75dvh); }
+.sds-body[data-layout='sim'], .sds-body[data-layout='code'] { height: var(--sds-h); }
+.sds-frame.is-full .sds-body { flex: 1; height: auto; min-height: 0; }
+.sds-frame.is-full .sds-body[data-layout='stack'] { grid-template-rows: minmax(0, 1.2fr) minmax(0, 1fr); }
+.sds-frame.is-full .sds-body[data-layout='stack'] .sds-sim,
+.sds-frame.is-full .sds-body[data-layout='stack'] .sds-ide { height: auto; }
 
 .sds-ide, .sds-sim {
-  min-width: 0;
+  min-width: 0; min-height: 0;
+  display: flex; flex-direction: column; overflow: hidden;
   border-radius: var(--sfs-radius, 12px);
   background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.06);
   border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
 }
-.sds-sim { padding: 0.75rem; }
-.sds-ide { display: flex; flex-direction: column; overflow: hidden; }
+.sds-sim__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  padding: 0.45rem 0.6rem 0.45rem 0.9rem; font-weight: 700; font-size: 0.92rem;
+  border-bottom: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.12);
+}
+.sds-sim__body { flex: 1; min-height: 0; overflow: auto; padding: 0.75rem; overscroll-behavior: contain; }
+.sds-max {
+  display: inline-grid; place-items: center; width: 2.1rem; height: 2.1rem; flex: none; margin-inline-start: auto;
+  border: 1px solid rgb(var(--sfs-line-rgb, 255 255 255) / 0.16); border-radius: 8px; cursor: pointer;
+  background: transparent; color: var(--sfs-text, #e8edf5);
+}
+.sds-max:hover { background: rgb(var(--sfs-tint-rgb, 255 255 255) / 0.1); }
+
+.sds-split {
+  position: relative; cursor: col-resize; touch-action: none; order: 1;
+}
+.sds-split::before {
+  content: ''; position: absolute; inset-block: 1.5rem; inset-inline-start: 50%; width: 4px; margin-inline-start: -2px;
+  border-radius: 4px; background: rgb(var(--sfs-line-rgb, 255 255 255) / 0.22); transition: background 0.15s;
+}
+.sds-split:hover::before, .sds-split:focus-visible::before { background: var(--sfs-accent, #667eea); }
+.sds-split:focus-visible { outline: none; }
+:global(body.sds-dragging) { cursor: col-resize; user-select: none; }
 
 .sds-tabs {
   display: flex; align-items: center; gap: 0.25rem; overflow-x: auto;
@@ -363,8 +538,8 @@ onMounted(open);
 }
 .sds-tabs button.is-on { background: var(--sfs-accent, #667eea); color: var(--sfs-on-accent, #ffffff); }
 
-.sds-pane { padding: 0.75rem; min-height: 32rem; }
-.sds-guide { max-height: 75vh; overflow: auto; }
+.sds-pane { flex: 1; min-height: 0; overflow: auto; padding: 0.75rem; overscroll-behavior: contain; }
+.sds-tabs { flex: none; }
 
 .sds-confirm {
   position: fixed; inset: 0; z-index: 2000;

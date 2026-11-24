@@ -731,6 +731,17 @@ const tools: Catalogue = {
     "No booking: the app is your proctor. It watches this session, records every breach and marks the paper. Your result is saved on this computer.": "无需预约：应用就是你的监考员。它会监控本次考试、记录每一次违规并为试卷评分。你的成绩保存在这台电脑上。",
     "Your record stays on this computer. Nothing is shared unless you choose to share your results from the desktop menu.": "你的记录保存在这台电脑上。除非你在桌面菜单中选择分享成绩，否则不会分享任何内容。",
     "Everything recorded here stays on this computer. Nothing records an answer, a question, or what you copied - a copy is recorded as a number of characters and never as the text.": "这里记录的一切都保存在这台电脑上。不会记录任何答案、题目或你复制的内容——复制只记录字符数，绝不记录文本本身。",
+    "Workspace layout": "工作区布局",
+    "Stacked": "上下排列",
+    "Simulator only": "仅模拟器",
+    "Code only": "仅代码",
+    "Esc leaves full screen": "按 Esc 退出全屏",
+    "Show the simulator too": "同时显示模拟器",
+    "Maximise the code": "最大化代码",
+    "Resize the panes": "调整窗格大小",
+    "Simulator": "模拟器",
+    "Show the code too": "同时显示代码",
+    "Maximise the simulator": "最大化模拟器",
 };
 
 export default tools;

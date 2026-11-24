@@ -1,3 +1,4 @@
+import { IS_DESKTOP } from '@/utils/desktop';
 import { hasPaidAiPlan } from '@/utils/products';
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
@@ -679,7 +680,9 @@ export const useAuthStore = defineStore('auth', () => {
      * them by hand on their profile, and if nobody had, the feature they had paid
      * for was invisible. App 11 replicates and pins each student itself.
      */
-    const hasLabAccess = computed(() => userFeatures.value.includes('lab_feature'));
+    /** A feature of the user's plans; on the desktop app every feature, always. */
+    const hasFeature = (name: string): boolean => IS_DESKTOP || userFeatures.value.includes(name);
+    const hasLabAccess = computed(() => hasFeature('lab_feature'));
 
     /**
      * The same feature, under the name the Network Simulator's route guard uses.
@@ -687,15 +690,15 @@ export const useAuthStore = defineStore('auth', () => {
      * the simulator runs in the browser and never needed a provisioned lab, so it
      * checked the feature alone while the sandboxes also demanded a `lab_url`.
      */
-    const hasLabFeature = computed(() => userFeatures.value.includes('lab_feature'));
+    const hasLabFeature = computed(() => hasFeature('lab_feature'));
 
-    const hasAiAccess = computed(() => userFeatures.value.includes('ai_feature'));
+    const hasAiAccess = computed(() => hasFeature('ai_feature'));
     /** A PAID plan with ai_feature: the desktop products (the free trial is not enough). */
-    const hasPaidAiAccess = computed(() => freeModeActive.value || hasPaidAiPlan(activeSubscriptions.value));
-    const hasRunbookAccess = computed(() => userFeatures.value.includes('runbook_feature'));
-    const hasExamFeature = computed(() => userFeatures.value.includes('exam_feature'));
-    const hasResearchFlowAccess = computed(() => userFeatures.value.includes('research_flow_feature'));
-    const hasToastmastersAccess = computed(() => userFeatures.value.includes('toastmasters_feature'));
+    const hasPaidAiAccess = computed(() => IS_DESKTOP || freeModeActive.value || hasPaidAiPlan(activeSubscriptions.value));
+    const hasRunbookAccess = computed(() => hasFeature('runbook_feature'));
+    const hasExamFeature = computed(() => hasFeature('exam_feature'));
+    const hasResearchFlowAccess = computed(() => hasFeature('research_flow_feature'));
+    const hasToastmastersAccess = computed(() => hasFeature('toastmasters_feature'));
 
     // NEW: admin flag
     const isAdmin = computed(() => !!user.value?.is_admin);
@@ -704,6 +707,7 @@ export const useAuthStore = defineStore('auth', () => {
      * True when the user has ANY active subscription.
      */
     const hasActiveSubscription = computed(() => {
+        if (IS_DESKTOP) return true;
         if (freeModeActive.value && user.value?.id) return true;
         if (activeSubscriptions.value.length > 0) return true;
         if (activeSubscription.value) return true;

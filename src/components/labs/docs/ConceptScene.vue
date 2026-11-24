@@ -1,9 +1,10 @@
 <template>
   <figure class="scs" :aria-label="caption || labels">
     <div class="scs__stage">
-      <canvas v-if="webgl" ref="canvas" class="scs__canvas" role="img" :aria-label="labels" />
-      <!-- No WebGL (an old machine, a locked-down browser): the labels in
-           order, which carry most of what the picture says. -->
+      <canvas v-if="webgl && !failed" ref="canvas" class="scs__canvas" role="img" :aria-label="labels" />
+      <!-- No WebGL (an old machine, a locked-down browser), or a context the browser
+           took away and did not give back: the labels in order, which carry most of
+           what the picture says. Never an empty box. -->
       <ol v-else class="scs__fallback">
         <li v-for="(item, at) in scene.labels" :key="at">{{ item }}</li>
       </ol>
@@ -30,6 +31,23 @@ const props = defineProps<{ scene: SceneSpec; caption?: string }>();
 const canvas = ref<HTMLCanvasElement | null>(null);
 const webgl = hasWebGL();
 const loading = ref(false);
+const failed = ref(false);
+let lostTimer = 0;
+let listening: HTMLCanvasElement | null = null;
+function onLost() {
+  window.clearTimeout(lostTimer);
+  // Given a moment to come back (sfs-stage-restored rebuilds); otherwise the fallback.
+  lostTimer = window.setTimeout(() => { failed.value = true; dispose?.(); dispose = null; }, 2500);
+}
+function onRestored() { window.clearTimeout(lostTimer); failed.value = false; build(); }
+function listen(el: HTMLCanvasElement | null) {
+  if (listening === el) return;
+  listening?.removeEventListener('sfs-stage-lost', onLost);
+  listening?.removeEventListener('sfs-stage-restored', onRestored);
+  listening = el;
+  el?.addEventListener('sfs-stage-lost', onLost);
+  el?.addEventListener('sfs-stage-restored', onRestored);
+}
 const labels = computed(() => props.scene.labels.join(' → '));
 let dispose: (() => void) | null = null;
 let generation = 0;
@@ -48,11 +66,14 @@ async function build() {
     ]);
     if (mine !== generation || !canvas.value) return;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || false;
+    listen(canvas.value);
     const stage = kit.createStage(canvas.value, themePalette(), { reduced });
     scenes.buildConceptScene(stage, props.scene.kind, props.scene.labels);
     dispose = () => stage.dispose();
   } catch {
-    // A chunk that failed to load leaves the labels' text in the caption.
+    // No context to be had (too many in use, a driver refusal) or a chunk that failed
+    // to load: the labelled steps instead of an empty canvas.
+    failed.value = true;
   } finally {
     if (mine === generation) loading.value = false;
   }
@@ -66,6 +87,8 @@ onMounted(() => {
 watch(() => [props.scene.kind, props.scene.labels.join('|')], () => build());
 onBeforeUnmount(() => {
   generation += 1;
+  window.clearTimeout(lostTimer);
+  listen(null);
   themeWatch?.disconnect();
   dispose?.();
 });
