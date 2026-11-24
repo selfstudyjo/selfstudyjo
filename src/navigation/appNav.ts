@@ -51,6 +51,7 @@
  * exhaustive — a name added here without a glyph is a compile error, not a
  * blank square.
  */
+import { hiddenOnDesktop } from '../utils/desktop';
 export type IconName =
     | 'home' | 'grid'
     | 'courses' | 'exams' | 'runbooks' | 'lab' | 'netsim'
@@ -262,7 +263,9 @@ export function matchParts(text: string, terms: string[]): { text: string; match
  * Access
  * ------------------------------------------------------------------ */
 
-export function canSee(entry: { requires?: AccessKey }, access: Access): boolean {
+export function canSee(entry: { requires?: AccessKey; to?: string }, access: Access): boolean {
+    // The desktop app (utils/desktop.ts) does not offer the website's online-only pages.
+    if (entry.to && hiddenOnDesktop(entry.to)) return false;
     const need: AccessKey = entry.requires ?? 'auth';
     if (need === 'public') return true;
     if (!access.auth) return false;
@@ -803,7 +806,7 @@ export function globalGroups(access: Access): NavGroup[] {
  * here: the component renders what it is given and decides nothing.
  */
 export function pinnedEntries(section: AppSection | null): NavEntry[] {
-    if (!section || section.id === 'newscast') return [HOME_ENTRY];
+    if (!section || section.id === 'newscast' || hiddenOnDesktop(NEWSCAST_ENTRY.to)) return [HOME_ENTRY];
     return [HOME_ENTRY, NEWSCAST_ENTRY];
 }
 

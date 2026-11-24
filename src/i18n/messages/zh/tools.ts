@@ -724,6 +724,13 @@ const tools: Catalogue = {
     "4 GB of memory and about 1 GB of free disk space. 8 GB of memory to run the AI on your own computer.": "4 GB 内存和约 1 GB 可用磁盘空间。若要在本机运行 AI，需要 8 GB 内存。",
     "The download needs a free SelfStudyJo account. Studying in the app needs no account and no internet.": "下载需要一个免费的 SelfStudyJo 账户。在应用中学习无需账户，也无需联网。",
     "Everything you do in the app stays on your computer. It goes online only when you sync new content, share your results or use the online AI.": "你在应用中的一切操作都留在你的电脑上。只有在同步新内容、分享成绩或使用在线 AI 时才会联网。",
+    "Take any exam now": "立即参加任何考试",
+    "No booking and no approval: start an exam whenever you are ready. The app is your proctor - it watches the session (leaving the window, copying, pasting, developer tools), records every breach, and marks the paper. Five breaches end the exam with a score of zero.": "无需预约，也无需审批：准备好了就开始考试。应用就是你的监考员——它会监控整个过程（离开窗口、复制、粘贴、开发者工具），记录每一次违规，并为试卷评分。违规五次，考试即以零分结束。",
+    "Start the exam now. The app proctors the session.": "立即开始考试。应用会监考整个过程。",
+    "Start exam": "开始考试",
+    "No booking: the app is your proctor. It watches this session, records every breach and marks the paper. Your result is saved on this computer.": "无需预约：应用就是你的监考员。它会监控本次考试、记录每一次违规并为试卷评分。你的成绩保存在这台电脑上。",
+    "Your record stays on this computer. Nothing is shared unless you choose to share your results from the desktop menu.": "你的记录保存在这台电脑上。除非你在桌面菜单中选择分享成绩，否则不会分享任何内容。",
+    "Everything recorded here stays on this computer. Nothing records an answer, a question, or what you copied - a copy is recorded as a number of characters and never as the text.": "这里记录的一切都保存在这台电脑上。不会记录任何答案、题目或你复制的内容——复制只记录字符数，绝不记录文本本身。",
 };
 
 export default tools;

@@ -1,3 +1,4 @@
+import { IS_DESKTOP, hiddenOnDesktop } from '@/utils/desktop';
 import { createRouter, createWebHistory } from 'vue-router';
 import { authGuard, publicOnlyGuard } from './guard';
 import { courseAccessRedirect } from './course-access-guard';
@@ -767,6 +768,12 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
     document.title = `${to.meta.title} | Self Study JO`;
+    // The desktop app: online-only pages are not offered, and there is no sign-in page
+    // (the student is signed in to their own local profile). See utils/desktop.ts.
+    if (IS_DESKTOP && (hiddenOnDesktop(to.path) || to.path === '/login')) {
+        next({ path: '/', replace: true });
+        return;
+    }
     // Per-course permissions. Skipped for a signed-out visitor on a route that
     // needs an account: the auth guard sends them to /login first.
     const { useAuthStore } = await import('@/store/auth');

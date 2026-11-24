@@ -10,7 +10,13 @@
       the end. The difference that matters to a student is the certificate, so
       that is what each card leads with.
     -->
-    <div class="exam-modes" role="note">
+    <div v-if="IS_DESKTOP" class="exam-modes" role="note">
+      <div class="exam-mode exam-mode--practice">
+        <div class="exam-mode__title">🖥️ {{ $t('Take any exam now') }}</div>
+        <p>{{ $t('No booking and no approval: start an exam whenever you are ready. The app is your proctor - it watches the session (leaving the window, copying, pasting, developer tools), records every breach, and marks the paper. Five breaches end the exam with a score of zero.') }}</p>
+      </div>
+    </div>
+    <div v-else class="exam-modes" role="note">
       <div class="exam-mode exam-mode--proctored">
         <div class="exam-mode__title">🎓 {{ $t('Proctored exam') }}</div>
         <p>{{ $t('Book an appointment with an available proctor and sit the exam at that time. Pass it and your certificate is issued automatically.') }}</p>
@@ -156,7 +162,7 @@
                   </svg>
                 </button>
               </template>
-              <template v-else-if="hasScheduledAppointment(exam)">
+              <template v-else-if="!IS_DESKTOP && hasScheduledAppointment(exam)">
                 <div class="appointment-actions">
                   <!-- Start Exam button (only appears 30 minutes before appointment AND can_start is true) -->
                   <button
@@ -186,7 +192,7 @@
                   </button>
                 </div>
               </template>
-              <template v-else>
+              <template v-else-if="!IS_DESKTOP">
                 <!-- Show schedule button for all other cases (no appointment, expired, cancelled, etc.) -->
                 <button @click="scheduleExam(exam)" class="btn-schedule" :disabled="!shouldShowScheduleButton(exam)">
                   <span>{{ getScheduleButtonText(exam) }}</span>
@@ -200,8 +206,8 @@
                    appointment, no approval, and never a certificate. Needs any
                    active subscription, which the route's guard checks. -->
               <button @click="practiceExam(exam)" class="btn-practice"
-                      :title="$t('Practice now - no appointment, no certificate')">
-                <span>{{ $t('Practice now') }}</span>
+                      :title="IS_DESKTOP ? $t('Start the exam now. The app proctors the session.') : $t('Practice now - no appointment, no certificate')">
+                <span>{{ IS_DESKTOP ? $t('Start exam') : $t('Practice now') }}</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                   <path d="M14.752 11.168L9.192 7.108C8.892 6.9 8.5 7.1 8.5 7.44V16.56C8.5 16.9 8.892 17.1 9.192 16.892L14.752 12.832C15.068 12.6 15.068 12.4 14.752 12.168Z"
                         fill="currentColor"/>
@@ -227,6 +233,7 @@
 </template>
 
 <script setup lang="ts">
+import { IS_DESKTOP } from '@/utils/desktop';
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';

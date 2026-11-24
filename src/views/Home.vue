@@ -36,13 +36,13 @@
             </svg>
             {{ $t('Exams') }}
           </router-link>
-          <router-link to="/leaderboard" class="sfs-btn sfs-btn--secondary sfs-btn--sm">
+          <router-link v-if="!IS_DESKTOP" to="/leaderboard" class="sfs-btn sfs-btn--secondary sfs-btn--sm">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path :d="ICONS.crown" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             {{ $t('Leaderboard') }}
           </router-link>
-          <router-link to="/certificates" class="sfs-btn sfs-btn--ghost sfs-btn--sm">
+          <router-link v-if="!IS_DESKTOP" to="/certificates" class="sfs-btn sfs-btn--ghost sfs-btn--sm">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path :d="ICONS.award" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -328,7 +328,7 @@
       </div>
 
       <!-- Certificates Section -->
-      <div class="dashboard-card card--certificates glass-effect">
+      <div v-if="!IS_DESKTOP" class="dashboard-card card--certificates glass-effect">
         <div class="card-header">
           <div class="card-title">
             <div class="title-icon certificate-icon">
@@ -609,7 +609,7 @@
       </div>
 
       <!-- Active Subscriptions Section -->
-      <div class="dashboard-card card--subscription glass-effect">
+      <div v-if="!IS_DESKTOP" class="dashboard-card card--subscription glass-effect">
         <div class="card-header">
           <div class="card-title">
             <div class="title-icon subscription-icon">
@@ -740,6 +740,7 @@ import { quizService, type UserQuizResult } from '@/services/quiz.service';
 import { subscriptionService, type Subscription } from '@/services/subscription.service';
 import { examService, type Exam } from '@/services/exam.service';
 import { d, t, td } from '@/i18n/runtime';
+import { IS_DESKTOP } from '@/utils/desktop';
 /*
   Every number this page reports is decided in `dashboardProgress.ts` — a plain
   module with no Vue in it, on the precedent of `photoMask.ts`,

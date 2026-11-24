@@ -751,6 +751,13 @@ const tools: Catalogue = {
     "4 GB of memory and about 1 GB of free disk space. 8 GB of memory to run the AI on your own computer.": "ذاكرة 4 غيغابايت ونحو 1 غيغابايت من المساحة الحرة. و8 غيغابايت من الذاكرة لتشغيل الذكاء الاصطناعي على حاسوبك.",
     "The download needs a free SelfStudyJo account. Studying in the app needs no account and no internet.": "يحتاج التنزيل إلى حساب SelfStudyJo مجاني. الدراسة في التطبيق لا تحتاج إلى حساب ولا إلى إنترنت.",
     "Everything you do in the app stays on your computer. It goes online only when you sync new content, share your results or use the online AI.": "كل ما تفعله في التطبيق يبقى على حاسوبك. لا يتصل بالإنترنت إلا عند مزامنة محتوى جديد أو مشاركة نتائجك أو استخدام الذكاء الاصطناعي عبر الإنترنت.",
+    "Take any exam now": "ابدأ أي امتحان الآن",
+    "No booking and no approval: start an exam whenever you are ready. The app is your proctor - it watches the session (leaving the window, copying, pasting, developer tools), records every breach, and marks the paper. Five breaches end the exam with a score of zero.": "لا حجز ولا موافقة: ابدأ الامتحان متى كنت مستعدًا. التطبيق هو المراقب - يراقب الجلسة (مغادرة النافذة، النسخ، اللصق، أدوات المطوّر)، ويسجّل كل مخالفة، ويصحّح الورقة. خمس مخالفات تنهي الامتحان بدرجة صفر.",
+    "Start the exam now. The app proctors the session.": "ابدأ الامتحان الآن. يراقب التطبيق الجلسة.",
+    "Start exam": "ابدأ الامتحان",
+    "No booking: the app is your proctor. It watches this session, records every breach and marks the paper. Your result is saved on this computer.": "لا حجز: التطبيق هو المراقب. يراقب هذه الجلسة ويسجّل كل مخالفة ويصحّح الورقة. تُحفظ نتيجتك على هذا الحاسوب.",
+    "Your record stays on this computer. Nothing is shared unless you choose to share your results from the desktop menu.": "يبقى سجلّك على هذا الحاسوب. لا يُشارَك أي شيء إلا إذا اخترت مشاركة نتائجك من قائمة التطبيق.",
+    "Everything recorded here stays on this computer. Nothing records an answer, a question, or what you copied - a copy is recorded as a number of characters and never as the text.": "كل ما يُسجَّل هنا يبقى على هذا الحاسوب. لا يُسجَّل أي جواب أو سؤال أو ما نسخته - يُسجَّل النسخ كعدد من الأحرف وليس كنص.",
 };
 
 export default tools;

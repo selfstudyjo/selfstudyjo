@@ -92,13 +92,17 @@
       one thing a student is owed BEFORE they start rather than afterwards - a
       rule nobody was told about is a trap, however visible the record is later.
     -->
-    <p class="pr-rules__public">
+    <p v-if="IS_DESKTOP" class="pr-rules__public">
+      {{ $t('Everything recorded here stays on this computer. Nothing records an answer, a question, or what you copied - a copy is recorded as a number of characters and never as the text.') }}
+    </p>
+    <p v-else class="pr-rules__public">
       {{ $t('Everything recorded here is public. Anybody can open your activity record on the leaderboard and see what you earned, what you lost and when. Nothing records an answer, a question, or what you copied — a copy is recorded as a number of characters and never as the text.') }}
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
+import { IS_DESKTOP } from '@/utils/desktop';
 /**
  * What the practice ledger rewards and punishes, printed rather than assumed.
  *

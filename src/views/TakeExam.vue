@@ -87,7 +87,8 @@
              been misled by omission. -->
         <div class="exam-gate__mode" :class="isPractice ? 'is-practice' : 'is-proctored'">
           <strong>{{ isPractice ? $t('Practice exam') : $t('Proctored exam') }}</strong>
-          <span v-if="isPractice">{{ $t('No appointment and no proctor. Your score is recorded and earns leaderboard points like a quiz, but a practice exam never issues a certificate.') }}</span>
+          <span v-if="isPractice && IS_DESKTOP">{{ $t('No booking: the app is your proctor. It watches this session, records every breach and marks the paper. Your result is saved on this computer.') }}</span>
+          <span v-else-if="isPractice">{{ $t('No appointment and no proctor. Your score is recorded and earns leaderboard points like a quiz, but a practice exam never issues a certificate.') }}</span>
           <span v-else>{{ $t('Sat with your proctor at your booked time. Pass it and your certificate is issued automatically.') }}</span>
         </div>
 
@@ -370,7 +371,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <router-link to="/leaderboard" class="btn-review">
+          <router-link v-if="!IS_DESKTOP" to="/leaderboard" class="btn-review">
             {{ $t('See my activity record') }}
           </router-link>
           <button @click="goToExams" class="btn-finish">{{ $t('Back to Exams') }}</button>
@@ -444,6 +445,7 @@
 </template>
 
 <script setup lang="ts">
+import { IS_DESKTOP } from '@/utils/desktop';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';

@@ -35,7 +35,10 @@
       <IntegrityRules context="lab" />
     </details>
 
-    <p class="pl-score__public">
+    <p v-if="IS_DESKTOP" class="pl-score__public">
+      {{ $t('Your record stays on this computer. Nothing is shared unless you choose to share your results from the desktop menu.') }}
+    </p>
+    <p v-else class="pl-score__public">
       {{ $t('Your record is public. Anybody can open it from the leaderboard and see every task you finished, every lab you are in the middle of, and every point earned or lost — with the time it happened.') }}
       <router-link to="/leaderboard" class="pl-score__link">
         {{ $t('See the leaderboard') }}
@@ -45,6 +48,7 @@
 </template>
 
 <script setup lang="ts">
+import { IS_DESKTOP } from '@/utils/desktop';
 /**
  * How a lab earns points, printed on the page that earns them.
  *

@@ -90,7 +90,7 @@
             </li>
           </ul>
           <div class="result-actions">
-            <router-link to="/leaderboard" class="btn-secondary">
+            <router-link v-if="!IS_DESKTOP" to="/leaderboard" class="btn-secondary">
               {{ $t('See my activity record') }}
             </router-link>
             <button v-if="lessonLink" class="btn-primary" @click="returnToLesson">
@@ -442,6 +442,7 @@
 </template>
 
 <script setup lang="ts">
+import { IS_DESKTOP } from '@/utils/desktop';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { quizService, type Quiz, type SubmitQuizResponse, type SubmitQuizRequest } from '@/services/quiz.service';

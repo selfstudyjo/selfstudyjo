@@ -11,7 +11,7 @@
       <div class="profile-content">
         <!-- Left Column - Profile Picture -->
         <div class="profile-left">
-          <div class="profile-card">
+          <div v-if="!IS_DESKTOP" class="profile-card">
             <h2 class="profile-card-title">{{ $t('Profile Picture') }}</h2>
 
             <div class="avatar-container">
@@ -231,7 +231,7 @@
           </div>
 
           <!-- Change Password Form -->
-          <div class="profile-card">
+          <div v-if="!IS_DESKTOP" class="profile-card">
             <h2 class="profile-card-title">{{ $t('Change Password') }}</h2>
             <form @submit.prevent="handleChangePassword" class="password-form">
               <div class="profile-form-group">
@@ -290,7 +290,7 @@
           </div>
 
           <!-- Danger Zone -->
-          <div class="profile-card danger-zone">
+          <div v-if="!IS_DESKTOP" class="profile-card danger-zone">
             <h2 class="profile-card-title">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.86-.833-2.632 0L4.282 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -360,6 +360,7 @@
 </template>
 
 <script setup lang="ts">
+import { IS_DESKTOP } from '@/utils/desktop';
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
