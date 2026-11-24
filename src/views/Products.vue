@@ -688,6 +688,25 @@ const catalogue = computed<Array<{
     privacy: t('Nothing about your drives or files leaves your computer. The app only connects to the operating system publishers when you download an image.'),
   },
   {
+    id: 'mobile-os-helper' as ProductId,
+    name: 'Mobile OS Helper',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t("Service phones, tablets and TV boxes over a USB cable: health checks, speed-ups, factory resets, and reinstalling or replacing the operating system - with an AI technician that tells you the safest fix."),
+    features: [
+      { title: t("Repair a working device"), text: t("Health check with a score, speed up and clean without deleting data, factory reset, and reinstall the original system to fix crashes and boot loops.") },
+      { title: t("Rescue a device that will not start"), text: t("Detects fastboot, recovery, Apple DFU, Qualcomm EDL, Samsung Download, Rockchip MaskROM and Amlogic burning modes, then installs stock firmware, LineageOS, a signed iOS or a full wipe.") },
+      { title: t("New systems for phones and TV boxes"), text: t("Ubuntu Touch, Kali NetHunter, postmarketOS and Droidian for phones; Ubuntu TV, LibreELEC, CoreELEC and stock firmware for Android and Linux TV boxes. Images are downloaded and checksum-verified.") },
+      { title: t("An AI technician, local or online"), text: t("The AI reads the device, its errors and the allowed operations, explains the problem and recommends the safest next step. Use SelfStudy LM on your computer, the Self-Study online AI, Ollama or your own key.") },
+      { title: t("Safe by design"), text: t("A working device is only offered repairs, every erase asks you to type ERASE, and Dry-run mode shows each command before anything runs. adb, fastboot and the Windows USB driver are included.") },
+    ],
+    requirements: [
+      t("Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer."),
+      t("A USB data cable. Android: USB debugging on, or the device in bootloader or recovery mode. iPhone and iPad: libimobiledevice (macOS and Linux) or iTunes drivers (Windows)."),
+      t("The download comes with a paid AI plan. The app itself needs no account."),
+    ],
+    privacy: t("Device data stays on your computer. The AI receives only a short summary of the device and its errors, and only the AI you choose - nothing at all with SelfStudy LM."),
+  },
+  {
     id: 'app-store' as ProductId,
     name: 'SelfStudy App Store',
     eyebrow: t('Desktop app · Windows, macOS and Linux'),
@@ -810,7 +829,7 @@ const wifiSteps = computed(() => [
 
 // The four apps built on the shared desktop kit install the same way; only the file
 // name (artifactName in each package.json) differs.
-const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'jobs-helper': 'SelfStudy-Jobs-Helper', 'usb-tool': 'SelfStudy-USB-Tool', 'app-store': 'SelfStudy-App-Store' };
+const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'jobs-helper': 'SelfStudy-Jobs-Helper', 'usb-tool': 'SelfStudy-USB-Tool', 'mobile-os-helper': 'SelfStudy-Mobile-OS-Helper', 'app-store': 'SelfStudy-App-Store' };
 const kitSteps = (id: string) => [
   { os: 'windows', format: '.exe / .msi', commands: [] as string[], steps: [
     t('Download the .exe installer (or the .msi) and run it.'),
