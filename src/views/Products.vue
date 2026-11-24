@@ -669,6 +669,25 @@ const catalogue = computed<Array<{
     privacy: t('Your profile, resume, answers, site sign-ins and reports stay on your computer. The online AI receives only the question being answered and your profile text; with the AI on your computer nothing is sent.'),
   },
   {
+    id: 'usb-tool' as ProductId,
+    name: 'Self-Study USB Tool',
+    eyebrow: t('Desktop app · Windows, macOS and Linux'),
+    lead: t('Make a bootable USB drive from any Linux or Windows ISO, download the operating system first if you need to, and format, scan and manage your USB drives and hard disks.'),
+    features: [
+      { title: t('Bootable USB in three steps'), text: t('Choose the ISO, choose the drive, press Start. Linux images are written byte for byte and start on BIOS and UEFI computers; Windows images are copied as files onto a FAT32 drive.') },
+      { title: t('Download Linux or Windows'), text: t('Ubuntu, Linux Mint, Fedora, Debian, Arch, Kali, Rocky Linux and openSUSE straight from their publishers, checked against the official SHA-256 checksum; Windows 10 and 11 from Microsoft\'s own page.') },
+      { title: t('Checked after writing'), text: t('Every byte is read back and compared with the image, so a fake or failing USB drive is found before you need it.') },
+      { title: t('Format and scan'), text: t('Format as FAT32, exFAT, NTFS, ext4, Mac OS Extended or APFS with MBR or GPT, and scan any drive for unreadable areas and its real speed.') },
+      { title: t('Safe by design'), text: t('The disk your computer runs from is never offered for erasing, internal hard disks are hidden until you ask for them, and the drive is checked again right before anything is written.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('A USB drive of 8 GB or more for Linux, 16 GB or more for Windows. Writing a drive asks for an administrator password.'),
+      t('The download comes with a paid AI plan. The app itself needs no account.'),
+    ],
+    privacy: t('Nothing about your drives or files leaves your computer. The app only connects to the operating system publishers when you download an image.'),
+  },
+  {
     id: 'app-store' as ProductId,
     name: 'SelfStudy App Store',
     eyebrow: t('Desktop app · Windows, macOS and Linux'),
@@ -791,7 +810,7 @@ const wifiSteps = computed(() => [
 
 // The four apps built on the shared desktop kit install the same way; only the file
 // name (artifactName in each package.json) differs.
-const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'jobs-helper': 'SelfStudy-Jobs-Helper', 'app-store': 'SelfStudy-App-Store' };
+const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'jobs-helper': 'SelfStudy-Jobs-Helper', 'usb-tool': 'SelfStudy-USB-Tool', 'app-store': 'SelfStudy-App-Store' };
 const kitSteps = (id: string) => [
   { os: 'windows', format: '.exe / .msi', commands: [] as string[], steps: [
     t('Download the .exe installer (or the .msi) and run it.'),

@@ -709,6 +709,20 @@ const tools: Catalogue = {
     "Accounts on the job sites you want to use. Most job sites do not allow automated applying in their terms: keep the daily number low.": "حسابات على مواقع الوظائف التي تريد استخدامها. معظم مواقع الوظائف لا تسمح بالتقديم الآلي في شروطها: أبقِ العدد اليومي منخفضًا.",
     "Your profile, resume, answers, site sign-ins and reports stay on your computer. The online AI receives only the question being answered and your profile text; with the AI on your computer nothing is sent.": "يبقى ملفك وسيرتك الذاتية وإجاباتك وتسجيلات دخولك إلى المواقع وتقاريرك على حاسوبك. يتلقى الذكاء الاصطناعي عبر الإنترنت السؤال المطلوب إجابته ونص ملفك فقط؛ ومع الذكاء الاصطناعي على حاسوبك لا يُرسل شيء.",
     "Office, the Text Editor, Studio DB, Jobs Helper, SelfStudyCode, Interview Helper, Video Editor, Protection, Browser, VPN and WiFi Connect.": "Office ومحرر النصوص وStudio DB وJobs Helper وSelfStudyCode وInterview Helper وVideo Editor وProtection وBrowser وVPN وWiFi Connect.",
+    "Make a bootable USB drive from any Linux or Windows ISO, download the operating system first if you need to, and format, scan and manage your USB drives and hard disks.": "أنشئ قرص USB قابلًا للإقلاع من أي ملف ISO لنظام Linux أو Windows، ونزّل نظام التشغيل أولًا إن احتجت، ونسّق أقراص USB والأقراص الصلبة وافحصها وأدرها.",
+    "Bootable USB in three steps": "قرص USB للإقلاع في ثلاث خطوات",
+    "Choose the ISO, choose the drive, press Start. Linux images are written byte for byte and start on BIOS and UEFI computers; Windows images are copied as files onto a FAT32 drive.": "اختر ملف ISO ثم القرص ثم اضغط ابدأ. تُكتب صور Linux بايتًا ببايت وتعمل على حواسيب BIOS وUEFI، وتُنسخ صور Windows ملفاتٍ إلى قرص FAT32.",
+    "Download Linux or Windows": "نزّل Linux أو Windows",
+    "Ubuntu, Linux Mint, Fedora, Debian, Arch, Kali, Rocky Linux and openSUSE straight from their publishers, checked against the official SHA-256 checksum; Windows 10 and 11 from Microsoft's own page.": "Ubuntu وLinux Mint وFedora وDebian وArch وKali وRocky Linux وopenSUSE مباشرة من ناشريها، مع التحقق من بصمة SHA-256 الرسمية؛ وWindows 10 و11 من صفحة Microsoft نفسها.",
+    "Checked after writing": "يُتحقق منه بعد الكتابة",
+    "Every byte is read back and compared with the image, so a fake or failing USB drive is found before you need it.": "يُقرأ كل بايت مرة أخرى ويُقارن بالصورة، فيُكتشف القرص المزيّف أو التالف قبل أن تحتاج إليه.",
+    "Format and scan": "التنسيق والفحص",
+    "Format as FAT32, exFAT, NTFS, ext4, Mac OS Extended or APFS with MBR or GPT, and scan any drive for unreadable areas and its real speed.": "نسّق بنظام FAT32 أو exFAT أو NTFS أو ext4 أو Mac OS Extended أو APFS مع MBR أو GPT، وافحص أي قرص بحثًا عن المناطق غير المقروءة وسرعته الحقيقية.",
+    "Safe by design": "آمن بطبيعته",
+    "The disk your computer runs from is never offered for erasing, internal hard disks are hidden until you ask for them, and the drive is checked again right before anything is written.": "لا يُعرض قرص النظام الذي يعمل منه حاسوبك للمسح أبدًا، وتُخفى الأقراص الداخلية حتى تطلبها، ويُتحقق من القرص مرة أخرى قبل الكتابة مباشرة.",
+    "A USB drive of 8 GB or more for Linux, 16 GB or more for Windows. Writing a drive asks for an administrator password.": "قرص USB بسعة 8 غيغابايت أو أكثر لنظام Linux، و16 غيغابايت أو أكثر لنظام Windows. تتطلب الكتابة على القرص كلمة مرور المسؤول.",
+    "The download comes with a paid AI plan. The app itself needs no account.": "يأتي التنزيل مع خطة ذكاء اصطناعي مدفوعة. التطبيق نفسه لا يحتاج إلى حساب.",
+    "Nothing about your drives or files leaves your computer. The app only connects to the operating system publishers when you download an image.": "لا يغادر أي شيء عن أقراصك أو ملفاتك حاسوبك. لا يتصل التطبيق إلا بناشري أنظمة التشغيل عندما تنزّل صورة.",
 };
 
 export default tools;

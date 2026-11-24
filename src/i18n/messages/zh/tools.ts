@@ -682,6 +682,20 @@ const tools: Catalogue = {
     "Accounts on the job sites you want to use. Most job sites do not allow automated applying in their terms: keep the daily number low.": "你想使用的求职网站账号。大多数求职网站的条款不允许自动申请：请保持较低的每日数量。",
     "Your profile, resume, answers, site sign-ins and reports stay on your computer. The online AI receives only the question being answered and your profile text; with the AI on your computer nothing is sent.": "你的资料、简历、答案、网站登录和报告都保留在你的电脑上。在线 AI 只接收正在回答的问题和你的资料文本；使用本机 AI 时不会发送任何内容。",
     "Office, the Text Editor, Studio DB, Jobs Helper, SelfStudyCode, Interview Helper, Video Editor, Protection, Browser, VPN and WiFi Connect.": "Office、文本编辑器、Studio DB、Jobs Helper、SelfStudyCode、Interview Helper、Video Editor、Protection、Browser、VPN 和 WiFi Connect。",
+    "Make a bootable USB drive from any Linux or Windows ISO, download the operating system first if you need to, and format, scan and manage your USB drives and hard disks.": "用任意 Linux 或 Windows ISO 制作可启动 U 盘，需要时先下载操作系统，并格式化、扫描和管理你的 U 盘与硬盘。",
+    "Bootable USB in three steps": "三步制作启动盘",
+    "Choose the ISO, choose the drive, press Start. Linux images are written byte for byte and start on BIOS and UEFI computers; Windows images are copied as files onto a FAT32 drive.": "选择 ISO、选择 U 盘、点击开始。Linux 镜像逐字节写入，可在 BIOS 和 UEFI 电脑上启动；Windows 镜像以文件形式复制到 FAT32 U 盘。",
+    "Download Linux or Windows": "下载 Linux 或 Windows",
+    "Ubuntu, Linux Mint, Fedora, Debian, Arch, Kali, Rocky Linux and openSUSE straight from their publishers, checked against the official SHA-256 checksum; Windows 10 and 11 from Microsoft's own page.": "直接从发行方下载 Ubuntu、Linux Mint、Fedora、Debian、Arch、Kali、Rocky Linux 和 openSUSE，并用官方 SHA-256 校验；Windows 10 和 11 来自 Microsoft 官方页面。",
+    "Checked after writing": "写入后校验",
+    "Every byte is read back and compared with the image, so a fake or failing USB drive is found before you need it.": "每个字节都会读回并与镜像比对，在你需要之前就能发现假冒或损坏的 U 盘。",
+    "Format and scan": "格式化与扫描",
+    "Format as FAT32, exFAT, NTFS, ext4, Mac OS Extended or APFS with MBR or GPT, and scan any drive for unreadable areas and its real speed.": "可格式化为 FAT32、exFAT、NTFS、ext4、Mac OS 扩展或 APFS，支持 MBR 或 GPT，并扫描任意磁盘的不可读区域和实际速度。",
+    "Safe by design": "安全设计",
+    "The disk your computer runs from is never offered for erasing, internal hard disks are hidden until you ask for them, and the drive is checked again right before anything is written.": "电脑正在运行的系统盘永远不会被列为可擦除，内置硬盘默认隐藏，写入前还会再次确认目标磁盘。",
+    "A USB drive of 8 GB or more for Linux, 16 GB or more for Windows. Writing a drive asks for an administrator password.": "Linux 需要 8 GB 以上的 U 盘，Windows 需要 16 GB 以上。写入磁盘时需要管理员密码。",
+    "The download comes with a paid AI plan. The app itself needs no account.": "下载需要付费 AI 套餐。应用本身无需账户。",
+    "Nothing about your drives or files leaves your computer. The app only connects to the operating system publishers when you download an image.": "有关你的磁盘和文件的任何信息都不会离开你的电脑。只有在你下载镜像时，应用才会连接操作系统发行方。",
 };
 
 export default tools;
