@@ -736,6 +736,21 @@ const tools: Catalogue = {
     "A USB drive of 8 GB or more for Linux, 16 GB or more for Windows. Writing a drive asks for an administrator password.": "قرص USB بسعة 8 غيغابايت أو أكثر لنظام Linux، و16 غيغابايت أو أكثر لنظام Windows. تتطلب الكتابة على القرص كلمة مرور المسؤول.",
     "The download comes with a paid AI plan. The app itself needs no account.": "يأتي التنزيل مع خطة ذكاء اصطناعي مدفوعة. التطبيق نفسه لا يحتاج إلى حساب.",
     "Nothing about your drives or files leaves your computer. The app only connects to the operating system publishers when you download an image.": "لا يغادر أي شيء عن أقراصك أو ملفاتك حاسوبك. لا يتصل التطبيق إلا بناشري أنظمة التشغيل عندما تنزّل صورة.",
+    "Desktop app · Windows, macOS and Linux · free with an account": "تطبيق مكتبي · ويندوز وmacOS ولينكس · مجاني مع حساب",
+    "The whole SelfStudyJo platform on your computer, offline: every course and lesson, every lab and playground, the simulators and product consoles, runbooks, quizzes and practice exams. No internet and no account needed to study.": "منصة SelfStudyJo كاملة على حاسوبك بدون إنترنت: كل الدورات والدروس، وكل المختبرات وبيئات التدريب، والمحاكيات ووحدات تحكم المنتجات، وأدلة التشغيل والاختبارات القصيرة والامتحانات التدريبية. لا تحتاج إلى إنترنت ولا إلى حساب للدراسة.",
+    "Everything on the website, offline": "كل ما في الموقع، بدون إنترنت",
+    "All the courses, lessons, runbooks, quizzes and practice exams, and the same labs, playgrounds, consoles, portals and simulators, running on your own computer.": "كل الدورات والدروس وأدلة التشغيل والاختبارات القصيرة والامتحانات التدريبية، ونفس المختبرات وبيئات التدريب ووحدات التحكم والبوابات والمحاكيات، تعمل على حاسوبك.",
+    "Real labs, graded on your computer": "مختبرات حقيقية تُقيَّم على حاسوبك",
+    "Linux, Git, Docker, Kubernetes, AWS, Azure, Terraform, Spark, SQL, Python and more: the same simulated environments as the website, checked task by task. Your Python runs for real.": "Linux وGit وDocker وKubernetes وAWS وAzure وTerraform وSpark وSQL وPython والمزيد: نفس البيئات المحاكاة الموجودة في الموقع، تُفحص مهمةً مهمة. ويعمل كود Python الخاص بك فعليًا.",
+    "Your progress stays with you": "تقدّمك يبقى معك",
+    "Results, lab work, progress and exams are saved on your computer only. Nothing is uploaded unless you choose to share.": "تُحفظ النتائج وأعمال المختبر والتقدّم والامتحانات على حاسوبك فقط. لا يُرفع أي شيء إلا إذا اخترت المشاركة.",
+    "AI tutor, on your computer or online": "مدرّس ذكاء اصطناعي على حاسوبك أو عبر الإنترنت",
+    "Ask the lab tutor and the AI Chat with SelfStudy LM running on your computer, or the Self-Study online AI when you are signed in.": "اسأل مدرّس المختبر ومحادثة الذكاء الاصطناعي باستخدام SelfStudy LM على حاسوبك، أو الذكاء الاصطناعي عبر الإنترنت من Self-Study عند تسجيل الدخول.",
+    "New courses and tools with one click": "دورات وأدوات جديدة بنقرة واحدة",
+    "Sign in to sync new courses, lessons and exams from the website, and to put your results on the online leaderboard. Both are optional.": "سجّل الدخول لمزامنة الدورات والدروس والامتحانات الجديدة من الموقع، ولنشر نتائجك في لوحة المتصدرين على الإنترنت. كلاهما اختياري.",
+    "4 GB of memory and about 1 GB of free disk space. 8 GB of memory to run the AI on your own computer.": "ذاكرة 4 غيغابايت ونحو 1 غيغابايت من المساحة الحرة. و8 غيغابايت من الذاكرة لتشغيل الذكاء الاصطناعي على حاسوبك.",
+    "The download needs a free SelfStudyJo account. Studying in the app needs no account and no internet.": "يحتاج التنزيل إلى حساب SelfStudyJo مجاني. الدراسة في التطبيق لا تحتاج إلى حساب ولا إلى إنترنت.",
+    "Everything you do in the app stays on your computer. It goes online only when you sync new content, share your results or use the online AI.": "كل ما تفعله في التطبيق يبقى على حاسوبك. لا يتصل بالإنترنت إلا عند مزامنة محتوى جديد أو مشاركة نتائجك أو استخدام الذكاء الاصطناعي عبر الإنترنت.",
 };
 
 export default tools;

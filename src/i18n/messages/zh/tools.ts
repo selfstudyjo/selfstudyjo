@@ -709,6 +709,21 @@ const tools: Catalogue = {
     "A USB drive of 8 GB or more for Linux, 16 GB or more for Windows. Writing a drive asks for an administrator password.": "Linux 需要 8 GB 以上的 U 盘，Windows 需要 16 GB 以上。写入磁盘时需要管理员密码。",
     "The download comes with a paid AI plan. The app itself needs no account.": "下载需要付费 AI 套餐。应用本身无需账户。",
     "Nothing about your drives or files leaves your computer. The app only connects to the operating system publishers when you download an image.": "有关你的磁盘和文件的任何信息都不会离开你的电脑。只有在你下载镜像时，应用才会连接操作系统发行方。",
+    "Desktop app · Windows, macOS and Linux · free with an account": "桌面应用 · Windows、macOS 和 Linux · 注册账户即可免费使用",
+    "The whole SelfStudyJo platform on your computer, offline: every course and lesson, every lab and playground, the simulators and product consoles, runbooks, quizzes and practice exams. No internet and no account needed to study.": "整个 SelfStudyJo 平台离线运行在你的电脑上：所有课程和课时、所有实验室和练习场、模拟器和产品控制台、操作手册、测验和模拟考试。学习无需联网，也无需账户。",
+    "Everything on the website, offline": "网站上的一切，均可离线使用",
+    "All the courses, lessons, runbooks, quizzes and practice exams, and the same labs, playgrounds, consoles, portals and simulators, running on your own computer.": "所有课程、课时、操作手册、测验和模拟考试，以及同样的实验室、练习场、控制台、门户和模拟器，都在你自己的电脑上运行。",
+    "Real labs, graded on your computer": "真实的实验室，在你的电脑上评分",
+    "Linux, Git, Docker, Kubernetes, AWS, Azure, Terraform, Spark, SQL, Python and more: the same simulated environments as the website, checked task by task. Your Python runs for real.": "Linux、Git、Docker、Kubernetes、AWS、Azure、Terraform、Spark、SQL、Python 等：与网站相同的模拟环境，逐项检查任务。你的 Python 代码真正运行。",
+    "Your progress stays with you": "你的进度只属于你",
+    "Results, lab work, progress and exams are saved on your computer only. Nothing is uploaded unless you choose to share.": "成绩、实验作业、进度和考试只保存在你的电脑上。除非你选择分享，否则不会上传任何内容。",
+    "AI tutor, on your computer or online": "AI 导师，在你的电脑上或在线",
+    "Ask the lab tutor and the AI Chat with SelfStudy LM running on your computer, or the Self-Study online AI when you are signed in.": "使用在你电脑上运行的 SelfStudy LM 向实验导师和 AI 聊天提问，或在登录后使用 Self-Study 在线 AI。",
+    "New courses and tools with one click": "一键获取新课程和工具",
+    "Sign in to sync new courses, lessons and exams from the website, and to put your results on the online leaderboard. Both are optional.": "登录后可从网站同步新的课程、课时和考试，并把你的成绩发布到在线排行榜。两者都是可选的。",
+    "4 GB of memory and about 1 GB of free disk space. 8 GB of memory to run the AI on your own computer.": "4 GB 内存和约 1 GB 可用磁盘空间。若要在本机运行 AI，需要 8 GB 内存。",
+    "The download needs a free SelfStudyJo account. Studying in the app needs no account and no internet.": "下载需要一个免费的 SelfStudyJo 账户。在应用中学习无需账户，也无需联网。",
+    "Everything you do in the app stays on your computer. It goes online only when you sync new content, share your results or use the online AI.": "你在应用中的一切操作都留在你的电脑上。只有在同步新内容、分享成绩或使用在线 AI 时才会联网。",
 };
 
 export default tools;

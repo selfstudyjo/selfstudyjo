@@ -724,6 +724,25 @@ const catalogue = computed<Array<{
     ],
     privacy: t('The store only talks to SelfStudy to list and download apps. It sends nothing about your computer except which system it is.'),
   },
+  {
+    id: 'elearning' as ProductId,
+    name: 'SelfStudy E-Learning',
+    eyebrow: t('Desktop app · Windows, macOS and Linux · free with an account'),
+    lead: t('The whole SelfStudyJo platform on your computer, offline: every course and lesson, every lab and playground, the simulators and product consoles, runbooks, quizzes and practice exams. No internet and no account needed to study.'),
+    features: [
+      { title: t('Everything on the website, offline'), text: t('All the courses, lessons, runbooks, quizzes and practice exams, and the same labs, playgrounds, consoles, portals and simulators, running on your own computer.') },
+      { title: t('Real labs, graded on your computer'), text: t('Linux, Git, Docker, Kubernetes, AWS, Azure, Terraform, Spark, SQL, Python and more: the same simulated environments as the website, checked task by task. Your Python runs for real.') },
+      { title: t('Your progress stays with you'), text: t('Results, lab work, progress and exams are saved on your computer only. Nothing is uploaded unless you choose to share.') },
+      { title: t('AI tutor, on your computer or online'), text: t('Ask the lab tutor and the AI Chat with SelfStudy LM running on your computer, or the Self-Study online AI when you are signed in.') },
+      { title: t('New courses and tools with one click'), text: t('Sign in to sync new courses, lessons and exams from the website, and to put your results on the online leaderboard. Both are optional.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('4 GB of memory and about 1 GB of free disk space. 8 GB of memory to run the AI on your own computer.'),
+      t('The download needs a free SelfStudyJo account. Studying in the app needs no account and no internet.'),
+    ],
+    privacy: t('Everything you do in the app stays on your computer. It goes online only when you sync new content, share your results or use the online AI.'),
+  },
 ]);
 
 // How to install Self-Study for Protection, per OS. The commands use the release's
@@ -829,7 +848,7 @@ const wifiSteps = computed(() => [
 
 // The four apps built on the shared desktop kit install the same way; only the file
 // name (artifactName in each package.json) differs.
-const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'jobs-helper': 'SelfStudy-Jobs-Helper', 'usb-tool': 'SelfStudy-USB-Tool', 'mobile-os-helper': 'SelfStudy-Mobile-OS-Helper', 'app-store': 'SelfStudy-App-Store' };
+const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'jobs-helper': 'SelfStudy-Jobs-Helper', 'usb-tool': 'SelfStudy-USB-Tool', 'mobile-os-helper': 'SelfStudy-Mobile-OS-Helper', 'app-store': 'SelfStudy-App-Store', elearning: 'SelfStudy-E-Learning' };
 const kitSteps = (id: string) => [
   { os: 'windows', format: '.exe / .msi', commands: [] as string[], steps: [
     t('Download the .exe installer (or the .msi) and run it.'),
