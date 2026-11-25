@@ -92,6 +92,7 @@ import { TOUR_KEYS } from '../../src/utils/tourSteps';
 import { ASSISTANT_KEYS } from '../../src/utils/assistantEngine';
 import { KIND_LABELS, REASON_KEYS } from '../../src/utils/learnerDossier';
 import { BADGE_STRINGS } from '../../src/utils/dashboardProgress';
+import { RAIL_KEYS, TAB_KEYS } from '../../src/utils/iptvEngine';
 import {
     DIFFICULTY_LABELS, FAMILY_LABEL_KEYS, GRADE_REPORT_KEYS, GUIDE_KEYS, GUI_PANELS,
     PANEL_TITLE_KEYS,
@@ -636,6 +637,14 @@ const LAB_STRINGS: string[] = [...new Set([
 const dynamicStrings = new Set<string>([
     ...Object.values(BUCKET_LABELS),
     ...CONTEXT_KEYS,
+    // Self Study TV's rail headings, reached as `$t(rail.key)`. Imported from
+    // `iptvEngine.ts` rather than written out, so a reworded heading cannot
+    // silently revert to English in both languages.
+    ...RAIL_KEYS,
+    // And its tab labels, reached as `$t(tab.label)` in the tab strip. Same
+    // arrangement, same reason; `TAB_KEYS` is itself derived from `TV_TABS`, so
+    // there is no second copy of the words anywhere.
+    ...TAB_KEYS,
     /*
       The dashboard's achievement badges — a name and a requirement each,
       reached as `t(BADGE_NAMES[id])` from a `v-for` over the badge list, so
@@ -734,6 +743,14 @@ const dynamicStrings = new Set<string>([
     ...Object.values(REPORT_LABEL_KEYS),
     ...REPORT_OTHER_KEYS,
 ]);
+
+for (const [id, catalogue] of CATALOGUES) {
+    const missing = [...RAIL_KEYS, ...TAB_KEYS]
+        .filter(s => catalogue[s] === undefined && !untranslatedSet.has(s));
+    ok(`${id}: every Self Study TV rail heading and tab is translated`,
+        missing.length === 0,
+        missing.length ? `${missing.length} missing: ${missing.join(' · ')}` : '');
+}
 
 for (const [id, catalogue] of CATALOGUES) {
     const missing = [...dynamicStrings]
