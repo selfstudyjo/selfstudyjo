@@ -20,6 +20,7 @@
  */
 import { serviceRegistry } from './config';
 import { aiLanguageHeaders } from '@/i18n/runtime';
+import { IS_DESKTOP } from '@/utils/desktop';
 import { tutorPrompt, type Lab } from '@/utils/labCatalogue';
 
 export interface TutorMessage {
@@ -34,7 +35,7 @@ export interface TutorResult {
 }
 
 const MODEL = 'llama-3.3-70b-versatile';
-const TIMEOUT_MS = 90_000;
+const TIMEOUT_MS = IS_DESKTOP ? 600_000 : 90_000;
 
 class LabAiService {
     private authToken = import.meta.env.VITE_AUTH_TOKEN || '';
@@ -89,8 +90,10 @@ class LabAiService {
                 signal: controller.signal,
             });
             if (!response.ok) {
+                // The backend's own sentence (why no model answered) beats a bare status code.
+                const why = await response.json().then((b) => b?.error, () => '');
                 return { ok: false,
-                         error: `The AI backend answered ${response.status}.` };
+                         error: typeof why === 'string' && why ? why : `The AI backend answered ${response.status}.` };
             }
             const body = await response.json();
             const text = body?.choices?.[0]?.message?.content;

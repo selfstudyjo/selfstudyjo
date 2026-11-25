@@ -17,6 +17,7 @@ import type { AiTopologySpec } from '@/netsim/topology';
 import { DEVICE_TYPES } from '@/netsim/devices';
 import { maskToPrefix } from '@/netsim/ip';
 import { aiLanguageHeaders } from '@/i18n/runtime';
+import { IS_DESKTOP } from '@/utils/desktop';
 
 export interface AiMessage {
     role: 'system' | 'user' | 'assistant';
@@ -201,7 +202,7 @@ class NetSimAiService {
             const base = this.replicas[idx];
             try {
                 const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 90000);
+                const timeout = setTimeout(() => controller.abort(), IS_DESKTOP ? 600000 : 90000);
                 const res = await fetch(`${base}/v1/chat/completions`, {
                     method: 'POST',
                     headers: {
@@ -223,7 +224,8 @@ class NetSimAiService {
                 clearTimeout(timeout);
 
                 if (!res.ok) {
-                    lastError = `HTTP ${res.status} from replica ${i + 1}`;
+                    const why = await res.json().then((b) => b?.error, () => '');
+                    lastError = typeof why === 'string' && why ? why : `HTTP ${res.status} from replica ${i + 1}`;
                     continue;
                 }
                 const body = await res.json();
