@@ -10,7 +10,7 @@ import { parseEditRequest, applyEdit, isEditRequest } from '../../src/netsim/qui
 let pass = 0, fail = 0;
 const ok = (cond: unknown, msg: string) => { if (cond) pass++; else { fail++; console.log('FAIL', msg); } };
 
-const CASES: Array<{ text: string; devices?: number; routers?: number; vlans?: number; ping?: boolean }> = [
+const CASES: Array<{ text: string; devices?: number; routers?: number; vlans?: number; ping?: boolean; hosts?: number; subnets?: number }> = [
     { text: 'build network from 10 devices and connected together', devices: 10, ping: true },
     { text: 'build a good network from 5 devices', devices: 5, ping: true },
     { text: 'a network of three devices', devices: 3, ping: true },
@@ -22,6 +22,14 @@ const CASES: Array<{ text: string; devices?: number; routers?: number; vlans?: n
     { text: '4 routers connected with OSPF, each with a switch and 3 PCs', routers: 4, ping: true },
     { text: 'build 10 devices network with dhcp', devices: 10, ping: false },
     { text: 'شبكة من 6 أجهزة', devices: 6, ping: true },
+    { text: 'build 2 subnet in the same network, subnet a 5 devices, subnet b 10 devices, connect them together so any device can communicate in both subnets', hosts: 15, subnets: 2, ping: true },
+    { text: '3 departments with 4 pcs each', hosts: 12, subnets: 3, ping: true },
+    { text: 'sales subnet with 6 pcs and hr subnet with 3 pcs', hosts: 9, subnets: 2, ping: true },
+    { text: 'a head office and two branches', subnets: 3, ping: true },
+    { text: '2 subnets: subnet a 5 pcs, subnet b 6 pcs, with internet', hosts: 11, subnets: 2, ping: true },
+    { text: '5 subnets with 3 computers each', hosts: 15, subnets: 5, ping: true },
+    { text: 'office with staff and guest VLANs and 8 pcs', vlans: 2, ping: true },
+    { text: 'two subnets of 30 pcs', hosts: 60, subnets: 2, ping: true },
 ];
 
 for (const c of CASES) {
@@ -32,6 +40,8 @@ for (const c of CASES) {
     if (c.devices) ok(spec.devices.length === c.devices, `${c.text}: ${spec.devices.length} devices, wanted ${c.devices}`);
     if (c.routers) ok(spec.devices.filter((d) => d.type.startsWith('router')).length === c.routers, `${c.text}: router count`);
     if (c.vlans) ok(p.vlans.length === c.vlans, `${c.text}: ${p.vlans.length} VLANs`);
+    if (c.subnets) ok((p.subnets || []).length === c.subnets, `${c.text}: ${(p.subnets || []).length} subnets, wanted ${c.subnets}`);
+    if (c.hosts) { const h = spec.devices.filter((d) => ['pc', 'laptop', 'server-generic', 'printer'].includes(d.type)).length; ok(h === c.hosts, `${c.text}: ${h} hosts, wanted ${c.hosts}`); }
     const built = topologyFromAiSpec(spec);
     ok(built.ok && built.topology, `${c.text}: converts (${built.reason || ''})`);
     ok(built.warnings.length === 0, `${c.text}: no warnings (${built.warnings.join(' | ')})`);
@@ -86,6 +96,9 @@ ok(!isEditRequest('build network from 10 devices and connected together'), 'conn
 ok(parseNetworkRequest('design something nice for my school') === null, 'no numbers -> null (the model is asked)');
 const cp = cleanParams({ routers: 99, switches: -3, pcs: '7', vlans: [10, 10, 5000, 20], internet: 1 });
 ok(cp && cp.routers === 8 && cp.switches >= 1 && cp.pcs === 7 && cp.vlans.join() === '10,20' && cp.internet, 'cleanParams clamps');
+const cs = cleanParams({ subnets: [{ name: 'A', pcs: 5 }, { name: 'B', devices: 10 }] });
+ok(cs && cs.subnets?.length === 2 && cs.subnets[1].pcs === 10 && cs.routers === 1, 'cleanParams keeps the model subnets');
+if (cs) { const bt = topologyFromAiSpec(buildQuickSpec(cs)); ok(bt.ok && bt.warnings.length === 0, 'model subnets build cleanly'); }
 ok(cleanParams(null) === null && cleanParams({}) === null, 'cleanParams refuses nothing');
 
 // Deterministic: same request, same network.

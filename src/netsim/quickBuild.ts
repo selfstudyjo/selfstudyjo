@@ -28,7 +28,11 @@ export interface QuickParams {
     internet: boolean;
     dhcp: boolean;
     firewall: boolean;
+    /** Separate subnets (sites, departments, LANs), each with its own devices. 2+ = routed design. */
+    subnets?: SubnetSpec[];
 }
+
+export interface SubnetSpec { name: string; pcs: number; laptops: number; servers: number; printers: number }
 
 const WORDS: Record<string, number> = {
     a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
@@ -55,10 +59,73 @@ function toNumber(tok: string): number | null {
     return WORDS[t] ?? null;
 }
 
+const SEG = '(?:subnets?|lans?|departments?|depts?|sites?|branch(?:es)?|floors?|offices?|segments?|teams?|labs?|buildings?|networks?)';
+const HOSTWORD = '(devices?|pcs?|computers?|hosts?|users?|machines?|clients?|laptops?|workstations?|nodes?)';
+
+/** "subnet a 5 devices, subnet b 10 devices" -> [{A,5},{B,10}]; "3 departments with 4 PCs each" -> 3x4. */
+export function parseSubnets(src: string): SubnetSpec[] {
+    const out: SubnetSpec[] = [];
+    const mk = (name: string, n: number, word: string): SubnetSpec => {
+        const laptops = /laptop/i.test(word) ? n : 0;
+        return { name: name.replace(/^./, (c) => c.toUpperCase()), pcs: laptops ? 0 : n, laptops, servers: 0, printers: 0 };
+    };
+    // 1. "<segment> <name> [with|has|of|:] <n> <hosts>"  and  "<name> <segment> [with] <n> <hosts>"
+    const named = new RegExp('\\b' + SEG + '\\s+([a-z0-9]{1,12})\\s*(?:with|has|have|of|:|=|-|contains?)?\\s*([0-9]{1,3}|[a-z]+)\\s+' + HOSTWORD, 'gi');
+    for (const m of src.matchAll(named)) {
+        if (/^(with|has|of|from|and|the|in|for)$/i.test(m[1])) continue;
+        const n = toNumber(m[2]);
+        if (n && n > 0) out.push(mk(m[1], Math.min(n, 60), m[3]));
+    }
+    if (out.length < 2) {
+        out.length = 0;
+        const named2 = new RegExp('\\b([a-z]{2,12})\\s+' + SEG + '\\s*(?:with|has|have|of|:|=|-)?\\s*([0-9]{1,3}|[a-z]+)\\s+' + HOSTWORD, 'gi');
+        for (const m of src.matchAll(named2)) {
+            if (/^(the|a|an|each|every|one|two|three|four|five|same|other|new|second|first)$/i.test(m[1])) continue;
+            const n = toNumber(m[2]);
+            if (n && n > 0) out.push(mk(m[1], Math.min(n, 60), m[3]));
+        }
+    }
+    if (out.length >= 2) return out.slice(0, 8);
+    // 2. "<k> <segments> ... <n> <hosts> each" / "<k> <segments> of|with <n> <hosts>"
+    const each = new RegExp('([0-9]{1,2}|[a-z]+)\\s+' + SEG + '\\b[^.]*?([0-9]{1,3}|[a-z]+)\\s+' + HOSTWORD + '\\s*(each|per|apiece|in each)?', 'i').exec(src);
+    const countOnly = new RegExp('([0-9]{1,2}|[a-z]+)\\s+' + SEG + '\\b', 'i').exec(src);
+    const k = each ? toNumber(each[1]) : countOnly ? toNumber(countOnly[1]) : null;
+    if (k && k >= 2 && k <= 8) {
+        let per = 4;
+        if (each) {
+            const n = toNumber(each[2]) || 0;
+            per = each[4] || /\b(of|with)\b/i.test(each[0]) ? n : Math.max(1, Math.round(n / k));
+        }
+        const word = each ? each[3] : 'pcs';
+        const names = 'ABCDEFGH';
+        return Array.from({ length: k }, (_, i) => mk(names[i], Math.min(Math.max(per, 1), 60), word));
+    }
+    // 3. "a head office and two branches", "main office and 3 branches"
+    const branches = /(?:head|main|central)\s+office\s+and\s+([0-9]{1,2}|[a-z]+)\s+branch(?:es)?/i.exec(src);
+    if (branches) {
+        const n = toNumber(branches[1]) || 1;
+        const per = /([0-9]{1,3}|[a-z]+)\s+(?:pcs?|computers?|hosts?|users?)\s*(?:each|per)/i.exec(src);
+        const k2 = per ? toNumber(per[1]) || 3 : 3;
+        return [mk('HQ', k2, 'pcs'), ...Array.from({ length: Math.min(n, 6) }, (_, i) => mk('Branch' + (i + 1), k2, 'pcs'))];
+    }
+    return [];
+}
+
 /** The numbers in a request, or null when it names nothing countable (then ask the model). */
 export function parseNetworkRequest(text: string): QuickParams | null {
     const src = String(text || '').trim();
     if (!src) return null;
+    const subnets = /vlan/i.test(src) ? [] : parseSubnets(src);
+    if (subnets.length >= 2) {
+        const p: QuickParams = { routers: 1, switches: subnets.length, pcs: 0, laptops: 0, servers: 0, printers: 0, phones: 0, aps: 0,
+            vlans: [], internet: /\b(internet|wan|isp|online|nat)\b|انترنت|إنترنت/i.test(src), dhcp: /\bdhcp\b/i.test(src), firewall: false, subnets };
+        // Servers or printers named once ("and a file server") go to the first subnet.
+        const srv = /([0-9]{1,2}|a|an|one|two|three)\s+(?:[a-z]+\s+)?servers?\b/i.exec(src);
+        if (srv) subnets[0].servers += toNumber(srv[1]) || 1;
+        const prn = /([0-9]{1,2}|a|an|one|two)\s+printers?\b/i.exec(src);
+        if (prn) subnets[0].printers += toNumber(prn[1]) || 1;
+        return p;
+    }
     const p: QuickParams = { routers: 0, switches: 0, pcs: 0, laptops: 0, servers: 0, printers: 0, phones: 0, aps: 0,
         vlans: [], internet: false, dhcp: false, firewall: false };
     let found = false;
@@ -80,6 +147,10 @@ export function parseNetworkRequest(text: string): QuickParams | null {
     const vlanCount = /(\d{1,2}|[a-z]+)\s+vlans/i.exec(src);
     if (vlanList) p.vlans = [...new Set(vlanList[1].match(/\d{1,4}/g)!.map(Number).filter((v) => v >= 2 && v <= 4094))].slice(0, 8);
     if (!p.vlans.length && vlanCount) { const n = toNumber(vlanCount[1]) || 0; p.vlans = Array.from({ length: Math.min(Math.max(n, 0), 8) }, (_, i) => (i + 1) * 10); }
+    if (!p.vlans.length) {
+        const namedV = /((?:[a-z]+(?:\s*,\s*|\s+and\s+))+[a-z]+)\s+vlans\b/i.exec(src) || /vlans?\s+(?:for|called|named)\s+((?:[a-z]+(?:\s*,\s*|\s+and\s+))+[a-z]+)/i.exec(src);
+        if (namedV) { const n = namedV[1].split(/\s*,\s*|\s+and\s+/).filter(Boolean).length; if (n >= 2) p.vlans = Array.from({ length: Math.min(n, 8) }, (_, i) => (i + 1) * 10); }
+    }
     if (p.vlans.length === 1) p.vlans = [];   // one VLAN is one subnet
     p.internet = /\b(internet|wan|isp|online|nat)\b|انترنت|إنترنت/i.test(src);
     p.dhcp = /\bdhcp\b/i.test(src);
@@ -125,6 +196,16 @@ export function cleanParams(x: any): QuickParams | null {
         vlans: Array.isArray(x.vlans) ? [...new Set(x.vlans.map(Number).filter((v: number) => v >= 2 && v <= 4094))].slice(0, 8) as number[] : [],
         internet: !!x.internet, dhcp: !!x.dhcp, firewall: !!x.firewall,
     };
+    if (Array.isArray(x.subnets) && x.subnets.length >= 2) {
+        p.subnets = x.subnets.slice(0, 8).map((sn: any, i: number) => ({
+            name: String(sn?.name || 'ABCDEFGH'[i]).replace(/[^\w -]/g, '').slice(0, 16) || 'ABCDEFGH'[i],
+            pcs: n(sn?.pcs ?? sn?.devices ?? sn?.hosts, 60), laptops: n(sn?.laptops, 30), servers: n(sn?.servers, 8), printers: n(sn?.printers, 4),
+        }));
+        p.subnets.forEach((sn) => { if (sn.pcs + sn.laptops + sn.servers + sn.printers === 0) sn.pcs = 3; });
+        p.routers = Math.max(p.routers, 1);
+        p.vlans = [];
+        return p;
+    }
     if (p.vlans.length === 1) p.vlans = [];
     const hosts = p.pcs + p.laptops + p.servers + p.printers + p.phones;
     if ((hosts || p.aps) && !p.switches) p.switches = Math.max(1, Math.ceil((hosts + p.aps) / 22));
@@ -133,9 +214,20 @@ export function cleanParams(x: any): QuickParams | null {
 }
 
 /** The prompt that asks a model for parameters only (used when the text parser finds nothing). */
-export const PARAMS_PROMPT = `Read a request for a computer network and reply with ONE JSON object and nothing else:
-{"routers":0,"switches":0,"pcs":0,"laptops":0,"servers":0,"printers":0,"phones":0,"aps":0,"vlans":[],"internet":false,"dhcp":false,"firewall":false}
-Fill in the numbers the request asks for (vlans = list of VLAN ids such as [10,20]). Choose sensible numbers when it only describes a place, e.g. "a small office" = 1 router, 1 switch, 6 pcs, 1 printer, internet true.`;
+export const PARAMS_PROMPT = `You turn a student's request for a computer network into numbers. A program then builds the network, so you never design addresses or cables yourself.
+Reply with ONE JSON object and nothing else, with exactly these keys:
+{"routers":0,"switches":0,"pcs":0,"laptops":0,"servers":0,"printers":0,"phones":0,"aps":0,"vlans":[],"subnets":[],"internet":false,"dhcp":false,"firewall":false}
+Rules:
+- "subnets" lists SEPARATE networks joined by routing (sites, departments, branches, floors, "subnet A / subnet B"): [{"name":"A","pcs":5,"laptops":0,"servers":0,"printers":0}, ...]. Use it whenever the request has two or more groups of devices. Each group's devices go INSIDE its entry, not in the top-level counts.
+- "vlans" lists VLAN ids (10, 20, 30...) only when the request says VLAN.
+- "devices", "computers", "hosts", "users" mean pcs. A switch or router named in the request counts in routers/switches.
+- internet true when it mentions Internet, WAN, ISP or NAT. aps = Wi-Fi access points (1 when it says Wi-Fi or wireless).
+- When the request only describes a place, choose sensible numbers.
+Examples:
+"two subnets, A with 5 devices and B with 10" -> {"routers":1,"switches":2,"pcs":0,"laptops":0,"servers":0,"printers":0,"phones":0,"aps":0,"vlans":[],"subnets":[{"name":"A","pcs":5,"laptops":0,"servers":0,"printers":0},{"name":"B","pcs":10,"laptops":0,"servers":0,"printers":0}],"internet":false,"dhcp":false,"firewall":false}
+"a small office with internet" -> {"routers":1,"switches":1,"pcs":6,"laptops":0,"servers":0,"printers":1,"phones":0,"aps":1,"vlans":[],"subnets":[],"internet":true,"dhcp":true,"firewall":false}
+"sales, HR and IT departments, 4 pcs each and a file server for IT" -> {"routers":1,"switches":3,"pcs":0,"laptops":0,"servers":0,"printers":0,"phones":0,"aps":0,"vlans":[],"subnets":[{"name":"Sales","pcs":4,"laptops":0,"servers":0,"printers":0},{"name":"HR","pcs":4,"laptops":0,"servers":0,"printers":0},{"name":"IT","pcs":4,"laptops":0,"servers":1,"printers":0}],"internet":false,"dhcp":false,"firewall":false}
+"a school lab: 20 computers, a printer and wifi" -> {"routers":1,"switches":1,"pcs":20,"laptops":0,"servers":0,"printers":1,"phones":0,"aps":1,"vlans":[],"subnets":[],"internet":false,"dhcp":false,"firewall":false}`;
 
 interface Ports { wired: string[]; sfp: string[]; wireless: string[] }
 const portCache = new Map<string, Ports>();
@@ -156,8 +248,113 @@ function ports(typeId: string): Ports {
 
 type SpecDevice = AiTopologySpec['devices'][number];
 
+/**
+ * Two or more subnets joined by routing. Up to the router's free ports: one router, one port per
+ * subnet. More subnets, or the Internet as well: an L3 core switch routes between them (a VLAN and
+ * an SVI per subnet, one access switch each), and the router faces the Internet.
+ */
+function buildSubnetSpec(p: QuickParams, subnets: SubnetSpec[]): AiTopologySpec {
+    const devices: SpecDevice[] = [];
+    const links: AiTopologySpec['links'] = [];
+    const notes: string[] = [];
+    const used = new Map<string, number>();
+    const take = (d: SpecDevice) => { const list = ports(d.type).wired; const i = used.get(d.hostname) ?? 0; used.set(d.hostname, i + 1); return list[i]; };
+    const add = (d: SpecDevice, x: NonNullable<SpecDevice['interfaces']>[number]) => { (d.interfaces ||= []).push(x); };
+    const link = (a: SpecDevice, ai: string, b: SpecDevice, bi: string, label?: string) => links.push({ from: a.hostname, fromInterface: ai, to: b.hostname, toInterface: bi, label });
+    const routerType = p.internet ? 'router-edge' : 'router-branch';
+    const routed = !p.internet && subnets.length <= ports('router-branch').wired.length;
+    const counters: Record<string, number> = {};
+    const name = (prefix: string) => `${prefix}${(counters[prefix] = (counters[prefix] || 0) + 1)}`;
+
+    const r1: SpecDevice = { hostname: 'R1', type: routed ? 'router-branch' : routerType, x: 640, y: 90, notes: routed ? 'Routes between the subnets' : 'Internet edge', interfaces: [] };
+    devices.push(r1);
+    let core: SpecDevice | null = null;
+    if (!routed) {
+        core = { hostname: 'CORE1', type: 'switch-l3', x: 640, y: 240, notes: 'Routes between the subnets (one SVI each)', vlans: subnets.map((_, i) => ({ id: (i + 1) * 10, name: subnets[i].name.toUpperCase() })), interfaces: [] };
+        devices.push(core);
+        const rp = ports(r1.type).wired[0], cp = take(core);
+        add(r1, { name: rp, ip: '10.255.0.1', mask: '255.255.255.252', mode: 'routed', enabled: true, description: 'to CORE1' });
+        add(core, { name: cp, ip: '10.255.0.2', mask: '255.255.255.252', mode: 'routed', enabled: true, description: 'to R1' });
+        link(r1, rp, core, cp, 'routed 10.255.0.0/30');
+        core.staticRoutes = [{ network: '0.0.0.0', mask: '0.0.0.0', nextHop: '10.255.0.1' }];
+        r1.staticRoutes = [];
+    }
+
+    const hostTotalOf = (sn: SubnetSpec) => sn.pcs + sn.laptops + sn.servers + sn.printers;
+    subnets.forEach((sn, i) => {
+        const third = (i + 1) * 10;
+        const net = `192.168.${third}.`, gw = net + '1', vlan = third;
+        const swX = 140 + i * Math.max(260, 1100 / subnets.length);
+        let sw: SpecDevice = { hostname: name('SW'), type: 'switch-24', x: swX, y: core ? 400 : 280, notes: `Subnet ${sn.name}: ${net}0/24`, interfaces: [] };
+        devices.push(sw);
+        const swUp = ports(sw.type).wired[ports(sw.type).wired.length - 1];
+        if (core) {
+            add(core, { sviVlan: vlan, ip: gw, mask: '255.255.255.0', enabled: true, description: `Gateway subnet ${sn.name}` });
+            const cp = take(core);
+            add(core, { name: cp, mode: 'access', vlan, enabled: true, description: `Subnet ${sn.name}` });
+            add(sw, { name: swUp, mode: 'access', vlan, enabled: true, description: 'uplink' });
+            sw.vlans = [{ id: vlan, name: sn.name.toUpperCase() }];
+            link(core, cp, sw, swUp, `subnet ${sn.name}`);
+            r1.staticRoutes!.push({ network: net + '0', mask: '255.255.255.0', nextHop: '10.255.0.2' });
+        } else {
+            const rp = ports(r1.type).wired[i];
+            add(r1, { name: rp, ip: gw, mask: '255.255.255.0', mode: 'routed', enabled: true, description: `Subnet ${sn.name}` });
+            link(r1, rp, sw, swUp, `subnet ${sn.name}`);
+        }
+        if (p.dhcp) (core || r1).dhcpPools = [...((core || r1).dhcpPools || []), { name: sn.name.toUpperCase(), network: net + '0', mask: '255.255.255.0', rangeStart: net + '100', rangeEnd: net + '199', gateway: gw }];
+        // hosts
+        let host = 10, k = 0;
+        const plug = (type: string, prefix: string, ip: string) => {
+            if ((used.get(sw.hostname) ?? 0) >= ports(sw.type).wired.length - 2) {
+                // Out of ports: a further switch in the same subnet.
+                const more: SpecDevice = { hostname: name('SW'), type: 'switch-24', x: sw.x! + 120, y: sw.y! + 60, interfaces: [] };
+                devices.push(more);
+                const a = take(sw), b = ports(more.type).wired[ports(more.type).wired.length - 1];
+                if (core) { add(sw, { name: a, mode: 'access', vlan, enabled: true }); add(more, { name: b, mode: 'access', vlan, enabled: true }); }
+                link(sw, a, more, b, 'uplink');
+                sw = more;
+            }
+            const dev: SpecDevice = { hostname: name(prefix), type, x: Math.round(sw.x! - 140 + (k % 4) * 90), y: Math.round(sw.y! + 150 + Math.floor(k / 4) * 105), interfaces: [] };
+            k++;
+            const nic = ports(type).wired[0], sp = take(sw);
+            add(dev, p.dhcp && prefix !== 'SRV' && prefix !== 'PRN' ? { name: nic, dhcp: true, enabled: true } : { name: nic, ip, mask: '255.255.255.0', enabled: true });
+            dev.defaultGateway = gw;
+            if (core) add(sw, { name: sp, mode: 'access', vlan, enabled: true, description: dev.hostname });
+            link(sw, sp, dev, nic);
+            devices.push(dev);
+        };
+        for (let j = 0; j < sn.servers; j++) plug('server-generic', 'SRV', net + (200 + j));
+        for (let j = 0; j < sn.printers; j++) plug('printer', 'PRN', net + (250 - j));
+        for (let j = 0; j < sn.pcs; j++) plug('pc', 'PC', net + (++host));
+        for (let j = 0; j < sn.laptops; j++) plug('laptop', 'LT', net + (++host));
+        notes.push(`Subnet ${sn.name}: ${net}0/24, gateway ${gw}, ${hostTotalOf(sn)} device(s), switch ${sw.hostname}.`);
+    });
+
+    if (p.internet) {
+        const net: SpecDevice = { hostname: 'INTERNET', type: 'internet', x: 640, y: -60, interfaces: [{ name: ports('internet').sfp[0], ip: '203.0.113.1', mask: '255.255.255.252', enabled: true }] };
+        const wan = ports(r1.type).sfp[0];
+        add(r1, { name: wan, ip: '203.0.113.2', mask: '255.255.255.252', mode: 'routed', enabled: true, natRole: 'outside', description: 'ISP' });
+        (r1.interfaces || []).forEach((i) => { if (i.ip && i.ip !== '203.0.113.2') i.natRole = 'inside'; });
+        r1.nat = { enabled: true, mode: 'pat', outsideInterface: wan, insideInterfaces: (r1.interfaces || []).filter((i) => i.natRole === 'inside').map((i) => i.name!) };
+        r1.staticRoutes = [...(r1.staticRoutes || []), { network: '0.0.0.0', mask: '0.0.0.0', nextHop: '203.0.113.1' }];
+        link(r1, wan, net, ports('internet').sfp[0], 'ISP');
+        devices.push(net);
+        notes.push('R1 reaches the Internet and translates every subnet to 203.0.113.2 (PAT).');
+    }
+    notes.unshift(routed
+        ? `R1 has one port in each subnet, so it routes between them: every device can reach every device in both subnets.`
+        : `CORE1 routes between the subnets (one VLAN and gateway SVI per subnet), so every device can reach every device.`);
+    const total = subnets.reduce((a, sn) => a + hostTotalOf(sn), 0);
+    return {
+        name: `${subnets.length} subnets, ${total} devices`,
+        description: subnets.map((sn) => `subnet ${sn.name}: ${hostTotalOf(sn)} device(s)`).join(', ') + (p.internet ? ', Internet via NAT' : '') + '.',
+        devices, links, notes,
+    };
+}
+
 /** Build the topology for the parameters. Deterministic: the same request, the same network. */
 export function buildQuickSpec(p: QuickParams): AiTopologySpec {
+    if (p.subnets && p.subnets.length >= 2) return buildSubnetSpec(p, p.subnets);
     const devices: SpecDevice[] = [];
     const links: AiTopologySpec['links'] = [];
     const notes: string[] = [];

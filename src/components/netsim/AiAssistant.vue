@@ -111,6 +111,12 @@ const placeholder = computed(() => {
 
 onMounted(async () => {
     ready.value = await netsimAi.initialize();
+    // The first lookup can come before the AI service has started (the desktop app starts it
+    // in the background): ask again a few times rather than say "Connecting..." for ever.
+    for (let i = 0; i < 6 && !ready.value; i++) {
+        await new Promise((r) => setTimeout(r, 2500));
+        ready.value = await netsimAi.initialize(true);
+    }
     // Restore any conversation stored with the project.
     const hist = store.project?.aiHistory || [];
     messages.value = hist.map(h => ({ role: h.role, content: h.content }));
