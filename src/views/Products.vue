@@ -679,6 +679,7 @@ const catalogue = computed<Array<{
       { title: t('Download Linux or Windows'), text: t('Ubuntu, Linux Mint, Fedora, Debian, Arch, Kali, Rocky Linux and openSUSE straight from their publishers, checked against the official SHA-256 checksum; Windows 10 and 11 from Microsoft\'s own page.') },
       { title: t('Checked after writing'), text: t('Every byte is read back and compared with the image, so a fake or failing USB drive is found before you need it.') },
       { title: t('Format and scan'), text: t('Format as FAT32, exFAT, NTFS, ext4, Mac OS Extended or APFS with MBR or GPT, and scan any drive for unreadable areas and its real speed.') },
+      { title: t('A USB drive as extra memory'), text: t('When RAM runs out, use a USB drive as extra virtual memory: the app measures the drive and works out the size. ReadyBoost on Windows; on Linux a swap that turns on whenever the drive is plugged in. A flash drive cannot become real RAM chips on any system, and macOS does not allow it.') },
       { title: t('Safe by design'), text: t('The disk your computer runs from is never offered for erasing, internal hard disks are hidden until you ask for them, and the drive is checked again right before anything is written.') },
     ],
     requirements: [

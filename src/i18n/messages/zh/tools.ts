@@ -699,6 +699,8 @@ const tools: Catalogue = {
     "Device data stays on your computer. The AI receives only a short summary of the device and its errors, and only the AI you choose - nothing at all with SelfStudy LM.": "设备数据保留在你的电脑上。AI 只会收到设备及其错误的简短摘要，而且只发给你选择的 AI；使用 SelfStudy LM 时不会发送任何内容。",
     "Make a bootable USB drive from any Linux or Windows ISO, download the operating system first if you need to, and format, scan and manage your USB drives and hard disks.": "用任意 Linux 或 Windows ISO 制作可启动 U 盘，需要时先下载操作系统，并格式化、扫描和管理你的 U 盘与硬盘。",
     "Bootable USB in three steps": "三步制作启动盘",
+    "A USB drive as extra memory": "把 U 盘用作额外内存",
+    "When RAM runs out, use a USB drive as extra virtual memory: the app measures the drive and works out the size. ReadyBoost on Windows; on Linux a swap that turns on whenever the drive is plugged in. A flash drive cannot become real RAM chips on any system, and macOS does not allow it.": "内存不足时，把 U 盘用作额外的虚拟内存：应用会测量 U 盘速度并算出合适的大小。Windows 上使用 ReadyBoost；Linux 上使用交换空间（swap），每次插入 U 盘都会自动启用。任何系统都无法把闪存盘变成真正的内存条，macOS 也不允许这样做。",
     "Choose the ISO, choose the drive, press Start. Linux images are written byte for byte and start on BIOS and UEFI computers; Windows images are copied as files onto a FAT32 drive.": "选择 ISO、选择 U 盘、点击开始。Linux 镜像逐字节写入，可在 BIOS 和 UEFI 电脑上启动；Windows 镜像以文件形式复制到 FAT32 U 盘。",
     "Download Linux or Windows": "下载 Linux 或 Windows",
     "Ubuntu, Linux Mint, Fedora, Debian, Arch, Kali, Rocky Linux and openSUSE straight from their publishers, checked against the official SHA-256 checksum; Windows 10 and 11 from Microsoft's own page.": "直接从发行方下载 Ubuntu、Linux Mint、Fedora、Debian、Arch、Kali、Rocky Linux 和 openSUSE，并用官方 SHA-256 校验；Windows 10 和 11 来自 Microsoft 官方页面。",
