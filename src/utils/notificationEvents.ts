@@ -715,6 +715,20 @@ export const NOTIFICATION_EVENTS: Record<string, NotificationEventSpec> = {
     },
 
     // -- Platform ------------------------------------------------------------
+    // Sent by the console's sfs_gitlab_token_watch DAG to every administrator,
+    // from 30 days before a backup-provider token expires. The console's own
+    // bell raises the same thing; this is the copy that reaches a phone.
+    'admin.token_expiring': {
+        key: 'admin.token_expiring',
+        category: 'system',
+        priority: 'urgent',
+        audience: 'operator',
+        sentBy: ['console'],
+        params: ['token', 'provider', 'status', 'expires'],
+        title: 'Renew the {provider} token {token}',
+        message: "The {provider} token {token} {status} (expiry date {expires}). Create a new one, store it in the password vault, and paste it on the console GitLab page - the daily backup mirror stops without it.",
+        link: '/notifications',
+    },
     'system.announcement': {
         key: 'system.announcement',
         category: 'system',
