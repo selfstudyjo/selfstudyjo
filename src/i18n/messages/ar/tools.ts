@@ -625,6 +625,8 @@ const tools: Catalogue = {
     "You control the ports": "أنت تتحكم في المنافذ",
     "Choose the ports in Settings, open them in the firewall for this app only, close them with one click, and have them closed automatically when you quit.": "اختر المنافذ من الإعدادات، وافتحها في جدار الحماية لهذا التطبيق وحده، وأغلقها بنقرة واحدة، أو دعها تُغلق تلقائياً عند الخروج.",
     "Hotspot in one click": "نقطة اتصال بنقرة واحدة",
+    "Share your internet, VPN included": "شارك اتصالك بالإنترنت، حتى مع VPN",
+    "On Windows, a computer with internet over Ethernet or Wi-Fi shares it with every device that joins its hotspot. With a VPN on, the devices use the internet through the VPN too. If Windows switches the hotspot off, the app turns it back on.": "على Windows، يشارك الحاسوب المتصل بالإنترنت عبر كابل Ethernet أو Wi-Fi اتصالَه مع كل جهاز ينضم إلى نقطة الاتصال. وعند تشغيل VPN تصل الأجهزة إلى الإنترنت عبر الـ VPN أيضًا. وإذا أوقف Windows نقطة الاتصال يعيد التطبيق تشغيلها.",
     "On Windows it starts a Wi-Fi Direct group that works with no internet connection; on Linux an access point. Others see it as a normal Wi-Fi network and join it from the app.": "على Windows ينشئ مجموعة Wi-Fi Direct تعمل دون اتصال بالإنترنت، وعلى Linux نقطة وصول. يراها الآخرون شبكة Wi-Fi عادية وينضمون إليها من التطبيق.",
     "Direct and group rooms": "غرف مباشرة وغرف جماعية",
     "Two devices make a direct room. Three or more join one hotspot and make a group room, where every device can talk to every other - the host relays when two cannot reach each other.": "جهازان يكوّنان غرفة مباشرة. ثلاثة أجهزة أو أكثر تنضم إلى نقطة اتصال واحدة وتكوّن غرفة جماعية يتحدث فيها كل جهاز مع الآخرين - ويمرّر المضيف الرسائل حين لا يصل جهازان أحدهما إلى الآخر.",

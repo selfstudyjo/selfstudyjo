@@ -598,6 +598,8 @@ const tools: Catalogue = {
     "You control the ports": "端口由你掌控",
     "Choose the ports in Settings, open them in the firewall for this app only, close them with one click, and have them closed automatically when you quit.": "在设置中选择端口，只为本应用在防火墙中开放端口，一键关闭，或在退出时自动关闭。",
     "Hotspot in one click": "一键开启热点",
+    "Share your internet, VPN included": "共享网络连接，开着 VPN 也可以",
+    "On Windows, a computer with internet over Ethernet or Wi-Fi shares it with every device that joins its hotspot. With a VPN on, the devices use the internet through the VPN too. If Windows switches the hotspot off, the app turns it back on.": "在 Windows 上，通过以太网或 Wi-Fi 上网的电脑可以把网络共享给加入其热点的每台设备。开启 VPN 时，这些设备也通过 VPN 上网。如果 Windows 关闭了热点，应用会自动重新开启。",
     "On Windows it starts a Wi-Fi Direct group that works with no internet connection; on Linux an access point. Others see it as a normal Wi-Fi network and join it from the app.": "在 Windows 上创建无需联网即可使用的 Wi-Fi Direct 群组；在 Linux 上创建接入点。其他设备会把它看作普通的 Wi-Fi 网络，并可在应用中加入。",
     "Direct and group rooms": "直连房间和群组房间",
     "Two devices make a direct room. Three or more join one hotspot and make a group room, where every device can talk to every other - the host relays when two cannot reach each other.": "两台设备组成直连房间。三台或更多设备加入同一个热点组成群组房间，每台设备都能与其他所有设备交流——两台设备无法直接互通时，由主机转发。",

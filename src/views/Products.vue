@@ -573,6 +573,7 @@ const catalogue = computed<Array<{
     lead: t('Chat, voice messages, audio calls and file sharing between nearby computers over Wi-Fi, with no router, switch or internet. One computer starts a hotspot, the others join, and everyone can reach everyone.'),
     features: [
       { title: t('Hotspot in one click'), text: t('On Windows it starts a Wi-Fi Direct group that works with no internet connection; on Linux an access point. Others see it as a normal Wi-Fi network and join it from the app.') },
+      { title: t('Share your internet, VPN included'), text: t('On Windows, a computer with internet over Ethernet or Wi-Fi shares it with every device that joins its hotspot. With a VPN on, the devices use the internet through the VPN too. If Windows switches the hotspot off, the app turns it back on.') },
       { title: t('Direct and group rooms'), text: t('Two devices make a direct room. Three or more join one hotspot and make a group room, where every device can talk to every other - the host relays when two cannot reach each other.') },
       { title: t('Voice messages and calls'), text: t('Record a voice message in any chat, or call another device directly. Calls go device to device over the Wi-Fi with echo cancellation and encryption, with no internet needed.') },
       { title: t('You control the ports'), text: t('Choose the ports in Settings, open them in the firewall for this app only, close them with one click, and have them closed automatically when you quit.') },
