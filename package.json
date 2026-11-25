@@ -84,7 +84,8 @@
     "build:roadmap-preview": "vite build --config tools/roadmap-preview/vite.config.ts",
     "shoot:roadmap": "npm run build:roadmap-preview && node tools/roadmap-preview/shoot.mjs",
     "check:codeeditor": "npx tsx tools/codeeditor-check/check.ts",
-    "check:labprogress": "npx tsx tools/labprogress-check/check.ts"
+    "check:labprogress": "npx tsx tools/labprogress-check/check.ts",
+    "check:netsimquick": "vite build --config tools/netsim-quick-check/vite.config.ts && node tools/netsim-quick-check/dist/check.mjs"
   },
   "dependencies": {
     "@babylonjs/core": "^8.56.2",

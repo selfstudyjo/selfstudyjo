@@ -859,13 +859,20 @@ export class Simulator {
             const role = roleOf(dev);
             if (!this.bridgesInternally(dev)) continue; // hosts and pure routers terminate the L2 domain
 
+            // The device the frame came from (the source on the first hop).
+            const cameFrom = node.steps.length ? node.steps[node.steps.length - 1].deviceId : srcDev.id;
             for (const out of dev.interfaces) {
-                if (out.id === inIf.id) continue;
+                // A frame never goes back out its own port - except on a radio, where the other
+                // associated clients are behind the same interface (two laptops on one AP talk
+                // to each other; real APs do this unless client isolation is switched on).
+                const hairpin = out.id === inIf.id;
+                if (hairpin && out.medium !== 'wireless' && out.medium !== 'cellular') continue;
                 const e = this.canEgress(dev, out, v, true);
                 if (!e.ok) continue;
                 // A radio has one peer per associated client, so fan out to all.
                 for (const adj of this.peersOf(out.id)) {
                     if (adj.peerIfaceId === inIf.id) continue;
+                    if (hairpin && adj.peerDeviceId === cameFrom) continue;
                     queue.push({
                         deviceId: adj.peerDeviceId,
                         inIfaceId: adj.peerIfaceId,

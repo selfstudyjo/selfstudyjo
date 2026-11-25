@@ -3,7 +3,8 @@
  *
  * The desktop app is for STUDY on the student's own computer: courses and lessons, labs,
  * playgrounds and simulators, runbooks, quizzes, exams (taken directly, the software is the
- * proctor), and the learning tools (roadmaps, mock interviews, Toastmasters, AI tutor). Every
+ * proctor), and the learning tools (roadmaps, mock interviews, Toastmasters, AI tutor, the CV
+ * Builder - the student's own CVs, kept on their computer). Every
  * page that is about money, other people or the online community - plans and payments,
  * certificates, leaderboards, exam booking, messages, the newscast - stays on the website.
  *
@@ -18,7 +19,7 @@ export const DESKTOP_HIDDEN: readonly string[] = [
     '/schedule-exam', '/exam-approval', '/proctor-dashboard', '/proctor-exam-appointment', '/proctor',
     '/certificates', '/all-certificates', '/certificate',
     '/leaderboard', '/messages', '/notifications', '/newscast', '/products',
-    '/cv-builder', '/research', '/roblox-tool', '/draw', '/live-course', '/live-courses',
+    '/research', '/roblox-tool', '/draw', '/live-course', '/live-courses',
     '/register', '/forgot-password', '/reset-password', '/verify-email', '/interview-helper',
 ];
 

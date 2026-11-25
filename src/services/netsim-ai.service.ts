@@ -14,6 +14,7 @@
 import { serviceRegistry } from './config';
 import type { Topology, ValidationIssue, SimEvent, Hop, PacketTrace, Device } from '@/netsim/types';
 import type { AiTopologySpec } from '@/netsim/topology';
+import { parseNetworkRequest, cleanParams, buildQuickSpec, PARAMS_PROMPT } from '@/netsim/quickBuild';
 import { DEVICE_TYPES } from '@/netsim/devices';
 import { maskToPrefix } from '@/netsim/ip';
 import { aiLanguageHeaders } from '@/i18n/runtime';
@@ -356,6 +357,22 @@ class NetSimAiService {
     }
 
     async generate(request: string, o: { existing?: Topology | null } = {}): Promise<AiResult<AiTopologySpec>> {
+        // The fast path (utils in netsim/quickBuild.ts): the request's numbers -> a correct
+        // topology in milliseconds. On the desktop it is the builder - a model on the student's
+        // CPU cannot write a whole topology in reasonable time - and the model is asked only for
+        // the numbers when the text names none. On the website the online AI designs, and the
+        // fast path is the fallback when it fails.
+        const extending = !!(o.existing && o.existing.devices.length && /\b(add|extend|modify|change|keep|existing|current)\b/i.test(request));
+        const parsed = parseNetworkRequest(request);
+        if (IS_DESKTOP && !extending) {
+            let params = parsed;
+            if (!params) {
+                const ask = await this.complete([{ role: 'system', content: PARAMS_PROMPT }, { role: 'user', content: request }], { temperature: 0.1, maxTokens: 200 });
+                params = ask.ok && ask.data ? cleanParams(extractJson<any>(ask.data)) : null;
+                if (!params) return { ok: false, error: ask.ok ? 'I could not tell how many devices you want. Say it with numbers, for example "2 routers, 3 switches and 12 PCs with VLANs 10 and 20".' : ask.error };
+            }
+            return { ok: true, data: buildQuickSpec(params), raw: '' };
+        }
         const messages: AiMessage[] = [
             { role: 'system', content: GENERATE_PROMPT },
             ...(o.existing && o.existing.devices.length
@@ -365,9 +382,13 @@ class NetSimAiService {
         ];
 
         const res = await this.complete(messages, { temperature: 0.25, maxTokens: 8000 });
-        if (!res.ok || !res.data) return { ok: false, error: res.error };
+        if (!res.ok || !res.data) {
+            if (parsed && !extending) return { ok: true, data: buildQuickSpec(parsed), raw: '' };
+            return { ok: false, error: res.error };
+        }
 
         const spec = extractJson<AiTopologySpec>(res.data);
+        if (!spec && parsed && !extending) return { ok: true, data: buildQuickSpec(parsed), raw: res.data };
         if (!spec) {
             return { ok: false, error: 'The AI response was not valid JSON. Try rephrasing the request, or ask for a smaller network.', raw: res.data };
         }
