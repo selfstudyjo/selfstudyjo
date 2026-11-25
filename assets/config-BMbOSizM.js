@@ -1,0 +1,1 @@
+import{Ur as e}from"./index-BKMv-vtN.js";export{e as serviceRegistry};
