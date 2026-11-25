@@ -5,6 +5,7 @@
 import { parseNetworkRequest, buildQuickSpec, cleanParams } from '../../src/netsim/quickBuild';
 import { topologyFromAiSpec } from '../../src/netsim/topology';
 import { createSimulator } from '../../src/netsim/engine';
+import { parseEditRequest, applyEdit, isEditRequest } from '../../src/netsim/quickEdit';
 
 let pass = 0, fail = 0;
 const ok = (cond: unknown, msg: string) => { if (cond) pass++; else { fail++; console.log('FAIL', msg); } };
@@ -50,6 +51,36 @@ for (const c of CASES) {
     }
     ok(bad === 0, `${c.text}: every host reaches every host (${bad} failures over ${hosts.length} hosts)`);
 }
+
+// Edits of the network on the canvas: every host must still reach every host afterwards.
+const allReach = (t: any) => { const sim = createSimulator(t); const hosts = t.devices.filter((d: any) => ['pc', 'laptop', 'server-generic', 'printer'].includes(d.typeId)); const ip = (d: any) => d.interfaces.find((i: any) => i.ipv4)?.ipv4 || ''; let bad = 0; for (const a of hosts) for (const b of hosts) if (a !== b && ip(b) && !sim.canReach(a.id, ip(b))) { bad++; if (bad <= 3) console.log('   no path', a.hostname, '->', b.hostname, ip(b)); } return { bad, n: hosts.length }; };
+const EDITS: Array<[string, string, number]> = [
+    ['build network from 10 devices and connected together', 'create another subnet and connect it to the current subnet', 8],
+    ['build network from 10 devices and connected together', 'add another subnet with 3 laptops', 3],
+    ['build network from 10 devices and connected together', 'add 4 more PCs', 4],
+    ['build network from 10 devices and connected together', 'add wifi', 2],
+    ['a network of three devices', 'create another subnet and connect it to the current one', 2],
+    ['4 routers connected with OSPF, each with a switch and 3 PCs', 'add a new subnet with 2 servers', 2],
+    ['2 routers, 3 switches and 12 PCs', 'add another LAN', 0],
+];
+for (const [base, req, added] of EDITS) {
+    const t0 = topologyFromAiSpec(buildQuickSpec(parseNetworkRequest(base)!)).topology!;
+    ok(isEditRequest(req), 'edit request: ' + req);
+    const plan = parseEditRequest(req);
+    ok(plan, 'edit parse: ' + req);
+    if (!plan) continue;
+    const before = t0.devices.length;
+    const r = applyEdit(t0, plan);
+    ok(r.ok && r.topology, req + ' on [' + base + ']: applies (' + (r.reason || '') + ')');
+    if (!r.topology) continue;
+    ok(t0.devices.length === before, req + ': the original is untouched');
+    const hostsAdded = r.topology.devices.filter((d) => ['pc', 'laptop', 'server-generic', 'printer'].includes(d.typeId)).length - t0.devices.filter((d) => ['pc', 'laptop', 'server-generic', 'printer'].includes(d.typeId)).length;
+    if (added) ok(hostsAdded === added, req + ': ' + hostsAdded + ' hosts added, wanted ' + added);
+    const reach = allReach(r.topology);
+    ok(reach.bad === 0, req + ' on [' + base + ']: every host reaches every host (' + reach.bad + ' failures over ' + reach.n + ')');
+}
+ok(!isEditRequest('build network from 10 devices'), 'a new build is not an edit');
+ok(!isEditRequest('build network from 10 devices and connected together'), 'connected together is a new build');
 
 // Unparseable text asks the model; its numbers are clamped.
 ok(parseNetworkRequest('design something nice for my school') === null, 'no numbers -> null (the model is asked)');

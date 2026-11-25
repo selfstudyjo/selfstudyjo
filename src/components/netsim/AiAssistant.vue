@@ -35,6 +35,12 @@
         <div class="ns-ai-role">{{ m.role === 'user' ? 'You' : 'Tutor' }}</div>
         <div v-if="m.role === 'assistant'" class="ns-ai-content" v-html="renderMd(m.content)"></div>
         <div v-else class="ns-ai-content plain">{{ m.content }}</div>
+        <div v-if="m.edited" class="ns-ai-spec">
+          <span><strong>{{ m.edited.devices.length }}</strong> {{ $t('devices ·') }} <strong>{{ m.edited.links.length }}</strong> {{ $t('links ready to build') }}</span>
+          <div class="ns-btn-row tight">
+            <button class="ns-btn primary sm" @click="applyEdited(m.edited)">{{ $t('Apply to canvas') }}</button>
+          </div>
+        </div>
         <div v-if="m.spec" class="ns-ai-spec">
           <span><strong>{{ m.spec.devices.length }}</strong> {{ $t('devices ·') }} <strong>{{ m.spec.links?.length || 0 }}</strong> {{ $t('links ready to build') }}</span>
           <div class="ns-btn-row tight">
@@ -76,12 +82,14 @@ import DeviceIcon from './DeviceIcon.vue';
 import { useNetSimStore } from '@/store/netsim';
 import { netsimAi, AI_QUICK_PROMPTS } from '@/services/netsim-ai.service';
 import type { AiTopologySpec } from '@/netsim/topology';
+import type { Topology } from '@/netsim/types';
 import { marked } from 'marked';
 
 interface ThreadMessage {
     role: 'user' | 'assistant';
     content: string;
     spec?: AiTopologySpec;
+    edited?: Topology;
 }
 
 const store = useNetSimStore();
@@ -129,8 +137,8 @@ function persist() {
     store.markDirty();
 }
 
-function push(role: 'user' | 'assistant', content: string, spec?: AiTopologySpec) {
-    messages.value.push({ role, content, spec });
+function push(role: 'user' | 'assistant', content: string, spec?: AiTopologySpec, edited?: Topology) {
+    messages.value.push({ role, content, spec, edited });
     persist();
     scrollDown();
 }
@@ -146,6 +154,16 @@ async function send() {
     try {
         if (mode.value === 'generate') {
             push('user', text);
+            // A change to the network on the canvas is applied to it, not rebuilt from scratch.
+            const ed = await netsimAi.edit(text, store.topology);
+            if (ed) {
+                if (ed.ok && ed.data?.topology) {
+                    push('assistant', ['**Changes ready**', '', ...ed.data.summary.map(l => `- ${l}`), '', 'Press **Apply to canvas** (Ctrl+Z undoes it), then run the simulator to ping across.'].join('\n'), undefined, ed.data.topology);
+                } else {
+                    push('assistant', `I could not change the network: ${ed.error || ''}`);
+                }
+                return;
+            }
             const res = await netsimAi.generate(text, { existing: store.topology });
             if (res.ok && res.data) {
                 const spec = res.data;
@@ -210,6 +228,10 @@ function applySpec(spec: AiTopologySpec, how: 'replace' | 'merge') {
         if (!proceed) return;
     }
     store.applyAiSpec(spec, how);
+}
+
+function applyEdited(t: Topology) {
+    store.applyEditedTopology(t);
 }
 
 function clearChat() {

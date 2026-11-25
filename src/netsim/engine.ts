@@ -435,6 +435,11 @@ export class Simulator {
 
         const bridgeSet = new Set(bridges.map(b => b.id));
         const visited = new Set<string>();
+        // Spanning tree runs per Layer-2 domain: switches that routers keep apart elect their
+        // own root. One global root left every other domain with no path to it, and a link
+        // between two of its switches was then blocked at random (by MAC order).
+        const roots = new Set<string>([root.id]);
+        const domainRoot = new Map<string, string>([[root.id, root.id]]);
 
         for (let n = 0; n < bridges.length; n++) {
             let cur: Device | null = null;
@@ -446,7 +451,15 @@ export class Simulator {
                     cur = b; curCost = c;
                 }
             }
-            if (!cur || curCost === Number.POSITIVE_INFINITY) break;
+            if (!cur || curCost === Number.POSITIVE_INFINITY) {
+                if (visited.size >= bridges.length) break;
+                // A new Layer-2 domain: its lowest bridge ID is its root.
+                cur = bridges.filter(b => !visited.has(b.id)).reduce((best, b) => (ids.get(b.id)! < ids.get(best.id)! ? b : best));
+                curCost = 0;
+                cost.set(cur.id, 0);
+                roots.add(cur.id);
+                domainRoot.set(cur.id, cur.id);
+            }
             visited.add(cur.id);
 
             for (const i of cur.interfaces) {
@@ -458,6 +471,7 @@ export class Simulator {
                     if (c < peerCost) {
                         cost.set(adj.peerDeviceId, c);
                         viaIface.set(adj.peerDeviceId, adj.peerIfaceId);
+                        domainRoot.set(adj.peerDeviceId, domainRoot.get(cur.id) || root.id);
                     }
                 }
             }
@@ -467,12 +481,12 @@ export class Simulator {
         for (const b of bridges) {
             b.stp = b.stp || { enabled: true, mode: 'rapid-pvst', priority: 32768 };
             b.stp.portRoles = {};
-            b.stp.isRoot = b.id === root.id;
-            b.stp.rootBridgeId = ids.get(root.id);
+            b.stp.isRoot = roots.has(b.id);
+            b.stp.rootBridgeId = ids.get(domainRoot.get(b.id) || root.id);
         }
 
         const rootPortOf = new Map<string, string | undefined>();
-        for (const b of bridges) rootPortOf.set(b.id, b.id === root.id ? undefined : viaIface.get(b.id));
+        for (const b of bridges) rootPortOf.set(b.id, roots.has(b.id) ? undefined : viaIface.get(b.id));
 
         for (const link of this.allLinks) {
             if (link.status !== 'up') continue;

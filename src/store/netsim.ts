@@ -815,6 +815,18 @@ export const useNetSimStore = defineStore('netsim', () => {
         return true;
     }
 
+    /** The assistant's edit of the current network (a changed copy): undoable with Ctrl+Z. */
+    function applyEditedTopology(next: Topology): void {
+        snapshot();
+        const keepId = topology.value.id;
+        topology.value = cloneTopology(next);
+        topology.value.id = keepId;
+        if (project.value) project.value.topology = topology.value;
+        rebuildSimulator();
+        markDirty();
+        toast('success', 'Changes applied', 'Run the simulation to see them work. Ctrl+Z undoes them.');
+    }
+
     function exportJson(): string {
         return exportTopology(topology.value);
     }
@@ -955,7 +967,7 @@ export const useNetSimStore = defineStore('netsim', () => {
         openTopology, openProject, newProject, saveProject, deleteProject,
         duplicateProject, shareProject, unshareProject, cloneShared,
         addCheckpoint, restoreCheckpoint,
-        loadTemplate, applyAiSpec, exportJson, importJson,
+        loadTemplate, applyAiSpec, applyEditedTopology, exportJson, importJson,
         setActiveLesson, checkLesson,
         playTrace, stopAnimation, stepHop, selectTrace,
         select, selectLink, setTool,

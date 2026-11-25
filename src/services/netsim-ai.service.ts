@@ -15,6 +15,7 @@ import { serviceRegistry } from './config';
 import type { Topology, ValidationIssue, SimEvent, Hop, PacketTrace, Device } from '@/netsim/types';
 import type { AiTopologySpec } from '@/netsim/topology';
 import { parseNetworkRequest, cleanParams, buildQuickSpec, PARAMS_PROMPT } from '@/netsim/quickBuild';
+import { isEditRequest, parseEditRequest, cleanEditPlan, applyEdit, EDIT_PROMPT, type EditResult } from '@/netsim/quickEdit';
 import { DEVICE_TYPES } from '@/netsim/devices';
 import { maskToPrefix } from '@/netsim/ip';
 import { aiLanguageHeaders } from '@/i18n/runtime';
@@ -354,6 +355,23 @@ class NetSimAiService {
             { role: 'user', content: question },
         ];
         return this.complete(messages, { temperature: 0.45, maxTokens: 2600 });
+    }
+
+    /**
+     * A change to the network on the canvas ("another subnet connected to this one", "add 4
+     * PCs", "add Wi-Fi"), applied to a copy in milliseconds (netsim/quickEdit.ts). The model is
+     * asked only which change is meant when the words do not say. null = not an edit request.
+     */
+    async edit(request: string, existing: Topology | null | undefined): Promise<AiResult<EditResult> | null> {
+        if (!existing || !existing.devices.length || !isEditRequest(request)) return null;
+        let plan = parseEditRequest(request);
+        if (!plan) {
+            const ask = await this.complete([{ role: 'system', content: EDIT_PROMPT }, { role: 'user', content: request }], { temperature: 0.1, maxTokens: 120 });
+            plan = ask.ok && ask.data ? cleanEditPlan(extractJson<any>(ask.data)) : null;
+            if (!plan) return IS_DESKTOP ? { ok: false, error: 'I can add a subnet, more devices or Wi-Fi to your network. Say which, for example "add another subnet with 4 PCs" or "add 3 laptops".' } : null;
+        }
+        const res = applyEdit(existing, plan);
+        return res.ok ? { ok: true, data: res } : { ok: false, error: res.reason };
     }
 
     async generate(request: string, o: { existing?: Topology | null } = {}): Promise<AiResult<AiTopologySpec>> {
