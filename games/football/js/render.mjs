@@ -25,6 +25,7 @@ export class Renderer {
     this.time = opts.time || 'day';
     this.weather = opts.weather || 'clear';
     this.stadium = opts.stadium || { stand: '#334155', seat: '#64748b', roof: true, tiers: 2, name: '' };
+    this.noHud = opts.hud === false;
     this.cx = 52; this.cy = 30; this.crowd = null; this.drops = [];
     this.resize();
   }
@@ -107,7 +108,7 @@ export class Renderer {
     for (const it of items) it.ball ? this.drawBall(v.ball) : this.drawPlayer(v, v.players[it.i], it.q);
     if (night) { g.fillStyle = 'rgba(10,20,60,0.12)'; g.fillRect(0, 0, this.w, this.h); }
     if (this.weather === 'rain') this.rain(dt);
-    this.hud(v, overlay);
+    if (!this.noHud) this.hud(v, overlay);
   }
 
   drawStands(v) {

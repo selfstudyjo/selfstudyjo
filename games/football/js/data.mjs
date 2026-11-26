@@ -292,3 +292,13 @@ export const DIFFICULTIES = [
   { id: 'legend', name: 'Legendary', react: 0.1, skill: 1.0, speed: 1.04, keeper: 0.93 },
 ];
 export const difficultyById = (id) => DIFFICULTIES.find((d) => d.id === id) || DIFFICULTIES[2];
+
+// Ratings for the team-select cards: attack, midfield, defence (0-99), and 1-5 stars.
+export function teamStats(team) {
+  const xi = lineup(team, 11, DEFAULT_FORMATION[11]);
+  const avg = (list, keys) => Math.round(list.reduce((s, p) => s + keys.reduce((a, k) => a + p.attrs[k], 0) / keys.length, 0) / Math.max(1, list.length));
+  const att = avg(xi.filter((p) => p.role === 'FW'), ['shooting', 'pace', 'dribbling']);
+  const mid = avg(xi.filter((p) => p.role === 'MF'), ['passing', 'dribbling', 'physical']);
+  const def = avg(xi.filter((p) => p.role === 'DF' || p.role === 'GK'), ['defending', 'physical']);
+  return { att, mid, def, ovr: team.strength, stars: Math.max(1, Math.min(5, Math.round(((team.strength - 58) / 31) * 9) / 2)) };
+}
