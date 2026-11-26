@@ -81,7 +81,6 @@ import playground from './playground';
 import roadmap from './roadmap';
 import search from './search';
 import topicinterview from './topicinterview';
-import watch from './watch';
 
 /**
  * Assembled in one place so a duplicate key is a real, visible conflict rather
@@ -131,7 +130,6 @@ const ar: Catalogue = {
     ...search,
     // "Interview on this topic": a short oral check on one lesson, lab, quiz or exam.
     ...topicinterview,
-    ...watch,
 };
 
 export default ar;

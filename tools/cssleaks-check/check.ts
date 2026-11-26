@@ -67,7 +67,6 @@ const NOT_A_PAGE = new Set([
     // ui.css is the shared component floor, not a page: every class it owns is
     // `sfs-`-prefixed precisely so it cannot collide with a page's, which is
     // the property this check exists to protect.
-    'iptv.css',
     'ui.css',
 ]);
 
