@@ -94,7 +94,13 @@
               </button>
             </div>
             <p v-if="detected.mobile" class="prod-muted">{{ $t('These apps run on a computer. Open this page on your Windows, Mac or Linux computer to download them.') }}</p>
-            <p v-else-if="p.id === 'selfstudy-os'" class="prod-muted" dir="auto">{{ $t('Download every ISO part below into one folder and join them into one ISO: on Windows run copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso in that folder, on Linux or macOS cat SelfStudy-OS-*.part* > SelfStudy-OS.iso. Then write the ISO to a USB stick with the Self-Study USB Tool.') }}</p>
+            <div v-else-if="p.id === 'selfstudy-os'" class="prod-os-get">
+              <p dir="auto">{{ $t('Get SelfStudy OS as ONE ISO file with the SelfStudy App Store: it downloads every part, checks it and saves one ISO in your Downloads folder, ready for the Self-Study USB Tool.') }}</p>
+              <button type="button" class="prod-btn prod-btn--primary" @click="selectTab('app-store' as ProductId)">
+                <span class="prod-btn__title">{{ $t('Get the App Store') }}</span>
+              </button>
+              <p class="prod-muted" dir="auto">{{ $t('Without the App Store: download every part below into one folder and join them. On Windows run copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso in that folder, on Linux or macOS cat SelfStudy-OS-*.part* > SelfStudy-OS.iso.') }}</p>
+            </div>
             <p v-else-if="!pickOf(p.id).gui && !pickOf(p.id).cli" class="prod-muted">{{ $t('There is no build for this computer yet. Every available build is listed below.') }}</p>
             <ul v-if="pickOf(p.id).guiAlternates.length || pickOf(p.id).cliAlternates.length" class="prod-alts">
               <li v-for="a in [...pickOf(p.id).guiAlternates, ...pickOf(p.id).cliAlternates]" :key="a.id">
@@ -1183,6 +1189,8 @@ onMounted(async () => {
 }
 .prod-alts { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.25rem; }
 .prod-muted { color: var(--sfs-text-muted, #cbd5e1); line-height: 1.6; margin: 0.5rem 0 0; }
+.prod-os-get { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; margin-top: 0.75rem; max-width: 46rem; }
+.prod-os-get > p { margin: 0; line-height: 1.6; }
 .prod-note { margin-top: 1.5rem; }
 
 .prod-mock {

@@ -21,7 +21,9 @@ const os: Catalogue = {
     'A 64-bit PC with 4 GB of memory (8 GB recommended), 64 GB of disk and AMD or Intel graphics.': '64 位电脑，4 GB 内存（建议 8 GB），64 GB 硬盘，AMD 或 Intel 显卡。',
     'Turn Secure Boot off in the firmware before installing. In the installer, create an administrator account for the parent or school and a standard account for the student.': '安装前请在固件中关闭安全启动（Secure Boot）。在安装程序中，为家长或学校创建管理员账号，为学生创建标准账号。',
     'SelfStudy OS sends nothing about the student anywhere. The AI runs on the computer itself.': 'SelfStudy OS 不会把学生的任何信息发送到任何地方。AI 在电脑本机运行。',
-    'Download every ISO part below into one folder and join them into one ISO: on Windows run copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso in that folder, on Linux or macOS cat SelfStudy-OS-*.part* > SelfStudy-OS.iso. Then write the ISO to a USB stick with the Self-Study USB Tool.': '将下方所有 ISO 分卷下载到同一文件夹并合并成一个 ISO：在 Windows 上于该文件夹中运行 copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso，在 Linux 或 macOS 上运行 cat SelfStudy-OS-*.part* > SelfStudy-OS.iso。然后用 Self-Study USB Tool 将 ISO 写入 U 盘。',
+    'Get SelfStudy OS as ONE ISO file with the SelfStudy App Store: it downloads every part, checks it and saves one ISO in your Downloads folder, ready for the Self-Study USB Tool.': '用 SelfStudy 应用商店获取单个 ISO 文件的 SelfStudy OS：它会下载所有分卷、校验并在“下载”文件夹中保存一个 ISO，可直接用 Self-Study USB Tool 写入。',
+    'Get the App Store': '获取应用商店',
+    'Without the App Store: download every part below into one folder and join them. On Windows run copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso in that folder, on Linux or macOS cat SelfStudy-OS-*.part* > SelfStudy-OS.iso.': '不使用应用商店：将下方所有分卷下载到同一文件夹并合并。在 Windows 上于该文件夹中运行 copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso，在 Linux 或 macOS 上运行 cat SelfStudy-OS-*.part* > SelfStudy-OS.iso。',
     'A USB stick of 16 GB or more, and about 20 GB of free space to download and join the parts.': '16 GB 或更大的 U 盘，以及约 20 GB 可用空间用于下载和合并分卷。',
 };
 
