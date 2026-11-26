@@ -1,0 +1,1 @@
+import{Ur as e}from"./index-CNcwPY1m.js";export{e as serviceRegistry};
