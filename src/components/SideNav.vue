@@ -427,6 +427,13 @@ const icons: Record<IconName, any> = {
     h('circle', { cx: '18', cy: '19', r: '2.2' }),
     h('path', { d: 'M6 7.2v2.3a3 3 0 003 3h6a3 3 0 013 3v1.3' }),
   ]),
+  // A gamepad: Self-Study Football.
+  game: stroked('GameIcon', '1.8', () => [
+    h('path', { d: 'M6 9h12a4 4 0 014 4v1.5a3 3 0 01-5.4 1.8L15 14H9l-1.6 2.3A3 3 0 012 14.5V13a4 4 0 014-4z' }),
+    h('path', { d: 'M8 11.5v3M6.5 13h3' }),
+    h('circle', { cx: '15.5', cy: '12.5', r: '0.6' }),
+    h('circle', { cx: '17.5', cy: '13.8', r: '0.6' }),
+  ]),
   leaderboard: filled('LeaderboardIcon',
     'M4 13h4v8H4v-8zm6-9h4v17h-4V4zm6 5h4v12h-4V9z'),
 

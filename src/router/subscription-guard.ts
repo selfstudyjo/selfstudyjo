@@ -47,7 +47,7 @@ export async function subscriptionGuard(
     // SelfStudy E-Learning Desktop is free with an ACCOUNT (requiresAuth already ran):
     // its tab on the Products page needs no subscription. App 27 lists and signs only the
     // free products for an account without a paid plan, so the other tabs stay closed.
-    if (to.path === '/products' && to.query.tab === 'elearning') {
+    if (to.path === '/products' && (to.query.tab === 'elearning' || to.query.tab === 'football')) {
         next();
         return;
     }

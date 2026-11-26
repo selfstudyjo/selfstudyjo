@@ -745,6 +745,26 @@ const catalogue = computed<Array<{
     ],
     privacy: t('Everything you do in the app stays on your computer. It goes online only when you sync new content, share your results or use the online AI.'),
   },
+  {
+    id: 'football' as ProductId,
+    name: 'Self-Study Football',
+    eyebrow: t('Desktop game · Windows, macOS and Linux · free with an account'),
+    lead: t('A fast, light football game for every student: 11-a-side, 7-a-side and a 5-a-side street cage, leagues and champions cups from every continent, and the World Nations Cup 2026. Play alone, with friends on one screen, over Wi-Fi or online.'),
+    features: [
+      { title: t('Leagues and cups from every continent'), text: t('Iberian, Albion, Italian, German, French, Gulf, East Asian, Americas and African leagues, the Jordan Pro League, champions cups and national tournaments, with five difficulty levels.') },
+      { title: t('Gamepads, keyboards and phones'), text: t('Any USB, Bluetooth or wireless gamepad your system sees, two players on one keyboard, and a touch pad on phones. Up to 22 human players in one match.') },
+      { title: t('LAN and hotspot, no internet needed'), text: t('One computer hosts, optionally with a password, and can make its own Wi-Fi hotspot. Others join from the app, or from any browser on the network.') },
+      { title: t('Online with an invite link'), text: t('Create a link, send it to a friend, and play peer to peer. The link opens in the app or on selfstudyjo.com.') },
+      { title: t('Broadcast 3D and tactical 2D cameras'), text: t('A broadcast camera with stadiums, crowds, day and night and rain, or a 2D view of the whole pitch. Runs smoothly on modest computers.') },
+      { title: t('Also on the website'), text: t('The same game plays at selfstudyjo.com/football in any browser, offline matches included.') },
+    ],
+    requirements: [
+      t('Windows 10 or 11 (64-bit), macOS 12 or newer (Intel or Apple Silicon), or a 64-bit Linux such as Ubuntu 20.04 or newer.'),
+      t('2 GB of memory and about 300 MB of free disk space. Any graphics chip.'),
+      t('The download needs a free SelfStudyJo account. Offline and LAN play need no account.'),
+    ],
+    privacy: t('Matches and tournaments are saved on your computer. Online play sends only the connection details through SelfStudyJo; the game itself goes straight between the players.'),
+  },
 ]);
 
 // How to install Self-Study for Protection, per OS. The commands use the release's
@@ -850,7 +870,7 @@ const wifiSteps = computed(() => [
 
 // The four apps built on the shared desktop kit install the same way; only the file
 // name (artifactName in each package.json) differs.
-const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'jobs-helper': 'SelfStudy-Jobs-Helper', 'usb-tool': 'SelfStudy-USB-Tool', 'mobile-os-helper': 'SelfStudy-Mobile-OS-Helper', 'app-store': 'SelfStudy-App-Store', elearning: 'SelfStudy-E-Learning' };
+const KIT_APPS: Record<string, string> = { office: 'SelfStudy-Office', editor: 'SelfStudy-Text-Editor', 'studio-db': 'SelfStudy-Studio-DB', 'jobs-helper': 'SelfStudy-Jobs-Helper', 'usb-tool': 'SelfStudy-USB-Tool', 'mobile-os-helper': 'SelfStudy-Mobile-OS-Helper', 'app-store': 'SelfStudy-App-Store', elearning: 'SelfStudy-E-Learning', football: 'SelfStudy-Football' };
 const kitSteps = (id: string) => [
   { os: 'windows', format: '.exe / .msi', commands: [] as string[], steps: [
     t('Download the .exe installer (or the .msi) and run it.'),

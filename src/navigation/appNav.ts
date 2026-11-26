@@ -62,7 +62,7 @@ export type IconName =
     | 'proctor'
     | 'list' | 'plus' | 'search' | 'library' | 'users' | 'write' | 'import'
     | 'globe' | 'play' | 'calendar' | 'check' | 'layers' | 'learn' | 'idCard'
-    | 'database' | 'terminal' | 'python' | 'newscast' | 'leaderboard' | 'car' | 'roadmap';
+    | 'database' | 'terminal' | 'python' | 'newscast' | 'leaderboard' | 'car' | 'roadmap' | 'game';
 
 /** The live counters the sidebar can hang off an entry. */
 export type BadgeKind = 'notifications' | 'messages';
@@ -365,6 +365,8 @@ const ALL_CERTIFICATES: NavEntry = { to: '/all-certificates', text: 'All Certifi
   one click on a page that is also listed under Learn and reachable from the
   search. The Newscast earned its pin because it was *reported* as unfindable.
 */
+// Self-Study Football: a game, public like the Leaderboard (offline play needs no account).
+const FOOTBALL: NavEntry = { to: '/football', text: 'Football', icon: 'game', keywords: 'football soccer game play match tournament league cup world nations controller gamepad lan hotspot multiplayer friends public', requires: 'public' };
 const LEADERBOARD: NavEntry = { to: '/leaderboard', text: 'Leaderboard', icon: 'leaderboard', keywords: 'ranking ranks top learners points scores standings league table podium leaders stats dashboard public', requires: 'public' };
 
 /*
@@ -711,6 +713,16 @@ export const APP_SECTIONS: AppSection[] = [
         related: [COURSES, LABS, RUNBOOKS],
     },
     {
+        id: 'football',
+        title: 'Self-Study Football',
+        subtitle: 'A football game for every student',
+        icon: 'game',
+        match: ['/football'],
+        home: '/football',
+        items: [FOOTBALL],
+        related: [LEADERBOARD, COURSES, PLANS],
+    },
+    {
         id: 'leaderboard',
         title: 'Leaderboard',
         subtitle: 'Who is ahead across the platform',
@@ -777,7 +789,7 @@ export function globalGroups(access: Access): NavGroup[] {
     return pruneGroups([
         { label: 'Main', items: [MESSAGES, NOTIFICATIONS, NEWSCAST] },
         { label: 'Learn', items: [COURSES, ROADMAPS, EXAMS, RUNBOOKS, LABS, ALL_CERTIFICATES, LEADERBOARD] },
-        { label: 'Tools', items: [PLAYGROUNDS, TOOL_LINUX, TOOL_SQL, TOOL_PYTHON, DRAW, NETSIM, SIMULATOR, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX, PRODUCTS] },
+        { label: 'Tools', items: [PLAYGROUNDS, TOOL_LINUX, TOOL_SQL, TOOL_PYTHON, DRAW, NETSIM, SIMULATOR, AI_CHAT, RESEARCH, TOASTMASTERS, JOB_INTERVIEW, CV_BUILDER, ROBLOX, FOOTBALL, PRODUCTS] },
         { label: 'Account', items: [MY_PLANS, PLANS, MY_CERTIFICATES, MY_RESULTS, PROFILE] },
         { label: 'Proctoring', items: [PROCTOR_DASHBOARD] },
     ], access);

@@ -320,6 +320,13 @@ const routes = [
                 meta: { title: 'All Certificates', requiresAuth: false }
             },
             {
+                // Self-Study Football: public, lazy (the game itself is static files in public/games).
+                path: 'football',
+                name: 'Football',
+                component: () => import('../views/Football.vue'),
+                meta: { title: 'Self-Study Football', requiresAuth: false }
+            },
+            {
                 path: 'leaderboard',
                 name: 'Leaderboard',
                 component: Leaderboard,

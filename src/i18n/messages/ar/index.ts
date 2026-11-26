@@ -77,6 +77,7 @@ import tour from './tour';
 import assistant from './assistant';
 import reader from './reader';
 import drive from './drive';
+import football from './football';
 import playground from './playground';
 import roadmap from './roadmap';
 import search from './search';
@@ -122,6 +123,7 @@ const ar: Catalogue = {
     ...reader,
     // The self-driving simulator (CARLA): a car and a recording, not a lab run.
     ...drive,
+    ...football,
     // The playgrounds: a free-practice workspace per tool, not a lab.
     ...playground,
     // The Roadmap Provider: a learning path drawn as a map, not a lab or a tour.
