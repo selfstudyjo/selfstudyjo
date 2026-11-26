@@ -1,5 +1,6 @@
 // Self-Study Football - menus, the match loop, and the multiplayer lobbies.
-import { allTeams, teamById, leagues, teamsOf, competitions, competitionById, FORMATIONS, DEFAULT_FORMATION, DIFFICULTIES, stadiumFor } from './data.mjs';
+import { allTeams, teamById, leagues, teamsOf, competitions, competitionById, FORMATIONS, DEFAULT_FORMATION, DIFFICULTIES, stadiumFor, teamStats, PITCHES } from './data.mjs';
+import { Renderer3D, webglOK, QUALITY, CAMERAS3D } from './render3d.mjs';
 import { Match, DT, viewFrom } from './engine.mjs';
 import { Renderer, CAMERAS, readable } from './render.mjs';
 import { Sound } from './audio.mjs';
@@ -12,29 +13,37 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#f97316', '#06b6d4', '#ec4899', '#84cc16', '#f43f5e', '#14b8a6', '#8b5cf6'];
 const SKEY = 'sfs-football-settings';
-const S = Object.assign({ camera: 'broadcast', quality: 1, volume: 0.8, sound: true, commentary: true, time: 'day', weather: 'clear', name: '', minutes: 4, difficulty: 'pro', size: 11 },
+const S = Object.assign({ camera: 'broadcast', quality: 'medium', volume: 0.85, sound: true, commentary: true, voice: 'auto', time: 'night', weather: 'clear', name: '', minutes: 4, difficulty: 'pro', size: 11, fullscreen: true },
   (() => { try { return JSON.parse(localStorage.getItem(SKEY) || '{}'); } catch { return {}; } })());
+if (!QUALITY[S.quality]) S.quality = 'medium';
 const saveSettings = () => { try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch { /* */ } };
 
 const app = $('#app');
 const input = new Input();
 const sound = new Sound();
-sound.setVolume(S.volume); sound.setOn(S.sound); sound.commentary = S.commentary;
+sound.setVolume(S.volume); sound.setOn(S.sound); sound.commentary = S.commentary; sound.comm.setVoice(S.voice);
 let env = { kind: 'plain' };
 let screenTick = null;      // per-frame menu handler (controller-select, lobbies)
 let net = null;             // { role: 'host'|'guest', api, kind: 'lan'|'online' }
 const isTouch = matchMedia('(pointer: coarse)').matches;
 
 // --------------------------------------------------------------- screens
-function screen(html, tick) {
+let currentTab = 'home';
+function screen(html, tick, tab) {
   screenTick = tick || null;
+  if (!game) startBackground();
   input.inGame = false;
-  app.innerHTML = `<div class="screen">${html}</div>`;
-  const first = app.querySelector('[autofocus], .menu button, button');
-  if (first && !isTouch) first.focus();
+  if (tab) currentTab = tab;
+  app.innerHTML = `<div class="screen">${html}</div><footer class="hints"><span><kbd>A</kbd> / <kbd>Enter</kbd> Select</span><span><kbd>B</kbd> / <kbd>Esc</kbd> Back</span><span><kbd>F11</kbd> Full screen</span><span class="padcount">🎮 ${pads().length}</span></footer>`;
+  const first = app.querySelector('[autofocus], .screen .feature, .screen .tile, .screen button.primary, .screen button');
+  if (first && !isTouch) first.focus({ preventScroll: true });
 }
+const TABS = [['home', 'Play'], ['cups', 'Tournaments'], ['multi', 'Multiplayer'], ['settings', 'Settings'], ['controls', 'Controls']];
 function header(title, back) {
-  return `<header class="bar">${back ? `<button class="ghost" data-act="${back}">‹ Back</button>` : '<span></span>'}<h1>${esc(title)}</h1><span class="brand">Self-Study Football</span></header>`;
+  return `<header class="topbar"><div class="logo"><span class="ballicon"></span><span><b>SELF-STUDY</b><i>FOOTBALL</i></span></div>
+    <nav class="tabs">${TABS.map(([a, l]) => `<button class="tab ${currentTab === a ? 'on' : ''}" data-act="${a}">${l}</button>`).join('')}</nav>
+    <div class="tright"><button class="iconbtn" data-act="fs" title="Full screen (F11)" aria-label="Full screen">⛶</button></div></header>
+    ${title ? `<div class="crumb">${back ? `<button class="back" data-act="${back}">‹ Back</button>` : ''}<h1>${esc(title)}</h1></div>` : ''}`;
 }
 app.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]');
@@ -52,7 +61,7 @@ function menuNav(events) {
     if (e.act === 'down' || e.act === 'right' && document.activeElement?.tagName !== 'SELECT') { (items[i + 1] || items[0])?.focus(); }
     else if (e.act === 'up' || e.act === 'left' && document.activeElement?.tagName !== 'SELECT') { (items[i - 1] || items[items.length - 1])?.focus(); }
     else if (e.act === 'ok' && e.id[0] !== 'k') { document.activeElement?.click(); }
-    else if (e.act === 'back' && e.id[0] !== 'k') { app.querySelector('[data-act^="home"], .bar [data-act]')?.click(); }
+    else if (e.act === 'back' && e.id[0] !== 'k') { app.querySelector('[data-act^="home"], .crumb [data-act]')?.click(); }
   }
 }
 function loop() {
@@ -64,21 +73,53 @@ function loop() {
 
 // --------------------------------------------------------------- home
 function home() {
+  currentTab = 'home';
   const online = env.kind === 'desktop' || env.kind === 'web';
-  screen(`${header('Self-Study Football')}
-  <section class="hero"><div><h2>Kick off</h2><p>11-a-side, 7-a-side or a 5-a-side street cage. Leagues and cups from every continent. Up to 22 players.</p></div></section>
-  <div class="menu grid">
-    <button data-act="quick" class="tile big"><b>Kick-off</b><span>Any two teams, you choose the side</span></button>
-    <button data-act="cups" class="tile big"><b>Tournaments</b><span>Leagues, champions cups, World Nations Cup 2026</span></button>
-    <button data-act="local" class="tile"><b>Local multiplayer</b><span>Same screen, keyboards and gamepads</span></button>
-    <button data-act="lan" class="tile"><b>LAN · Wi-Fi · Hotspot</b><span>${env.kind === 'desktop' ? 'Host or join on the same network, no internet needed' : 'Join a game hosted on this network'}</span></button>
-    <button data-act="online" class="tile" ${online ? '' : 'disabled'}><b>Online with a friend</b><span>${online ? 'Send an invite link' : 'Open the desktop app or selfstudyjo.com'}</span></button>
-    <button data-act="street" class="tile"><b>Street cage</b><span>5 v 5 with walls, fast and wild</span></button>
-    <button data-act="settings" class="tile"><b>Settings</b><span>Camera, graphics, sound</span></button>
-    <button data-act="controls" class="tile"><b>Controls</b><span>Keyboards and gamepads</span></button>
-  </div>
-  <p class="foot">${pads().length} gamepad(s) connected · Press any button on a gamepad to wake it</p>`);
+  const pool = allTeams().filter((t) => t.kind === 'club').sort((a, b) => b.strength - a.strength).slice(0, 12);
+  const fa = pool[Math.floor(Math.random() * pool.length)];
+  let fb; do { fb = pool[Math.floor(Math.random() * pool.length)]; } while (fb === fa);
+  featured = [fa.id, fb.id];
+  screen(`${header('')}
+  <section class="home">
+    <button class="feature" data-act="featured" style="--a:${fa.kit.primary};--b:${fb.kit.primary}">
+      <span class="kicker">Featured match</span>
+      <span class="big">KICK-OFF</span>
+      <span class="fixture"><span class="club">${shirt(fa.kit)}<b>${esc(fa.name)}</b></span><em>VS</em><span class="club">${shirt(fb.kit)}<b>${esc(fb.name)}</b></span></span>
+      <span class="go">Press <kbd>A</kbd> to play</span>
+    </button>
+    <div class="stack">
+      <button class="tile hero2" data-act="cups"><span class="ic">🏆</span><b>Tournaments</b><span>Leagues, champions cups, World Nations Cup 2026</span></button>
+      <button class="tile hero3" data-act="quick"><span class="ic">⚽</span><b>Custom match</b><span>Any two teams, any stadium, any weather</span></button>
+      <button class="tile hero4" data-act="street"><span class="ic">🧱</span><b>Street cage</b><span>5 v 5 with walls, fast and wild</span></button>
+    </div>
+  </section>
+  <div class="row4">
+    <button class="tile" data-act="local"><span class="ic">🎮</span><b>Local multiplayer</b><span>Same screen, up to 4 pads + 2 keyboards</span></button>
+    <button class="tile" data-act="lan"><span class="ic">📶</span><b>LAN · Hotspot</b><span>${env.kind === 'desktop' ? 'Host or join, no internet needed' : 'Join a game on this network'}</span></button>
+    <button class="tile" data-act="online" ${online ? '' : 'disabled'}><span class="ic">🌐</span><b>Online</b><span>${online ? 'Invite a friend with a link' : 'Use the app or selfstudyjo.com'}</span></button>
+    <button class="tile" data-act="settings"><span class="ic">⚙️</span><b>Settings</b><span>Graphics, camera, commentary</span></button>
+  </div>`, null, 'home');
 }
+let featured = null;
+function multi() {
+  currentTab = 'multi';
+  const online = env.kind === 'desktop' || env.kind === 'web';
+  screen(`${header('Multiplayer')}<div class="row4 tall">
+    <button class="tile" data-act="local"><span class="ic">🎮</span><b>Same screen</b><span>Keyboards and gamepads on this device</span></button>
+    <button class="tile" data-act="lan"><span class="ic">📶</span><b>LAN · Wi-Fi · Hotspot</b><span>One computer hosts, others and phones join, no internet</span></button>
+    <button class="tile" data-act="online" ${online ? '' : 'disabled'}><span class="ic">🌐</span><b>Online with a friend</b><span>Create an invite link and send it</span></button>
+  </div>`, null, 'multi');
+}
+let shirtId = 0;
+function shirt(kit) {
+  const id = 'sh' + (++shirtId), sec = kit.secondary === kit.primary ? '#f8fafc' : kit.secondary;
+  const pat = kit.pattern === 'stripes' ? [14, 26, 38, 50].map((x) => `<rect x="${x}" y="0" width="6" height="64" fill="${sec}"/>`).join('')
+    : kit.pattern === 'hoops' ? [22, 36, 50].map((y) => `<rect x="0" y="${y}" width="64" height="6" fill="${sec}"/>`).join('')
+    : kit.pattern === 'half' ? `<rect x="32" y="0" width="32" height="64" fill="${sec}"/>` : kit.pattern === 'sash' ? `<path d="M10 10 L60 60 L52 64 L2 18Z" fill="${sec}"/>` : '';
+  const path = 'M21 5 L8 13 L2 27 L12 32 L15 27 L15 60 L49 60 L49 27 L52 32 L62 27 L56 13 L43 5 Q32 13 21 5Z';
+  return `<svg class="shirt" viewBox="0 0 64 64" aria-hidden="true"><defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs><path d="${path}" fill="${kit.primary}"/><g clip-path="url(#${id})">${pat}<rect x="0" y="0" width="64" height="5" fill="${sec}" opacity=".9"/></g><path d="${path}" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1.5"/></svg>`;
+}
+const stars = (n) => { const k = Math.max(1, Math.min(5, Math.round(n))); return '★'.repeat(k) + '☆'.repeat(5 - k); };
 const pads = () => input.list().filter((c) => c.kind === 'gamepad');
 
 // --------------------------------------------------------------- team pickers
@@ -103,21 +144,20 @@ function renderSetup() {
   screen(`${header('Kick-off', 'home')}
   <div class="setup">
     ${teamCard('home', 'Home', H, s.hf, s.size)}
-    <div class="vs">VS</div>
+    <div class="vs"><span>VS</span><button class="iconbtn" data-act="swap" title="Swap sides">⇄</button><button class="iconbtn" data-act="random" title="Random teams">🎲</button></div>
     ${teamCard('away', 'Away', A, s.af, s.size)}
   </div>
   <div class="opts">
     <label>Mode<select data-f="size">${[[11, '11-a-side'], [7, '7-a-side'], [5, '5-a-side street cage']].map(([v, n]) => `<option value="${v}" ${+s.size === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-    <label>Half length<select data-f="minutes">${[2, 3, 4, 5, 6, 8, 10].map((m) => `<option value="${m}" ${+s.minutes === m ? 'selected' : ''}>${m * 2} min match</option>`).join('')}</select></label>
+    <label>Match length<select data-f="minutes">${[2, 3, 4, 5, 6, 8, 10].map((m) => `<option value="${m}" ${+s.minutes === m ? 'selected' : ''}>${m * 2} minutes</option>`).join('')}</select></label>
     <label>Difficulty<select data-f="difficulty">${diffOptions(s.difficulty)}</select></label>
-    <label>Time<select data-f="time">${['day', 'dusk', 'night'].map((x) => `<option ${S.time === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-    <label>Weather<select data-f="weather">${['clear', 'rain'].map((x) => `<option ${S.weather === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+    <label>Time of day<select data-f="time">${[['day', 'Day'], ['dusk', 'Sunset'], ['night', 'Night (floodlights)']].map(([x, n]) => `<option value="${x}" ${S.time === x ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label>Weather<select data-f="weather">${[['clear', 'Clear'], ['rain', 'Rain']].map(([x, n]) => `<option value="${x}" ${S.weather === x ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
   </div>
-  <div class="menu row"><button data-act="swap" class="ghost">⇄ Swap sides</button><button data-act="random" class="ghost">🎲 Random teams</button><button data-act="toSides" class="primary">Choose controllers ›</button></div>`);
+  <div class="menu row"><button data-act="toSides" class="primary big" autofocus>Choose controllers ›</button></div>`, null, 'home');
   app.querySelectorAll('select').forEach((el) => el.addEventListener('change', () => {
     const f = el.dataset.f, v = el.value;
-    if (f === 'home' || f === 'away') s[f] = v;
-    else if (f === 'hf' || f === 'af') s[f] = v;
+    if (f === 'home' || f === 'away' || f === 'hf' || f === 'af') s[f] = v;
     else if (f === 'size') { s.size = +v; s.hf = s.af = DEFAULT_FORMATION[s.size]; S.size = s.size; if (s.size === 5) { s.home = teamsOf('street')[0].id; s.away = teamsOf('street')[1].id; } }
     else if (f === 'minutes') { s.minutes = +v; S.minutes = +v; }
     else if (f === 'difficulty') { s.difficulty = v; S.difficulty = v; }
@@ -126,11 +166,14 @@ function renderSetup() {
   }));
 }
 function teamCard(side, label, T, form, size) {
-  const k = T.kit;
-  return `<div class="team" style="--kit:${k.primary};--ink:${readable(k.primary)}">
-    <div class="crest">${esc(T.short)}</div><small>${label}</small>
-    <select data-f="${side}">${teamOptions(T.id)}</select>
-    <div class="meta"><span>${esc(T.city)}</span><span>Rating ${T.strength}</span></div>
+  const st = teamStats(T), bar = (n, v) => `<div class="stat"><span>${n}</span><i style="--v:${v}%"></i><b>${v}</b></div>`;
+  return `<div class="team" style="--kit:${T.kit.primary};--kit2:${T.kit.secondary}">
+    <div class="tside">${label}</div>
+    <div class="tcrest">${shirt(T.kit)}</div>
+    <div class="tname"><button class="iconbtn sm" data-act="prevTeam" data-side="${side}" aria-label="Previous team">◀</button><b>${esc(T.name)}</b><button class="iconbtn sm" data-act="nextTeam" data-side="${side}" aria-label="Next team">▶</button></div>
+    <div class="tmeta">${esc(T.kind === 'nation' ? 'National team' : T.city)} · <span class="stars">${stars(st.stars)}</span> · OVR ${st.ovr}</div>
+    ${bar('ATT', st.att)}${bar('MID', st.mid)}${bar('DEF', st.def)}
+    <label>Team<select data-f="${side}">${teamOptions(T.id)}</select></label>
     <label>Formation<select data-f="${side === 'home' ? 'hf' : 'af'}">${formationOptions(size, form)}</select></label></div>`;
 }
 
@@ -166,7 +209,7 @@ function controllerSelect(opts = {}) {
         if (lock != null && n !== 0 && n !== lock) n = 0;
         sides.set(e.id, n); changed = true;
       } else if (e.act === 'start' || (e.act === 'ok' && e.id[0] === 'g')) { ACTIONS.kick(); return; }
-      else if (e.act === 'back' && e.id[0] === 'g') { app.querySelector('.bar [data-act]')?.click(); return; }
+      else if (e.act === 'back' && e.id[0] === 'g') { app.querySelector('.crumb [data-act]')?.click(); return; }
     }
     if (changed || (performance.now() - (draw.t || 0) > 500)) { draw.t = performance.now(); draw(); }
   });
@@ -190,12 +233,19 @@ function startMatch(extra = {}) {
   const m = new Match({ home: H, away: A, size: setup.size, homeFormation: setup.hf, awayFormation: setup.af, minutes: setup.minutes, difficulty: setup.difficulty, knockout: !!setup.knockout, humans, seed: Date.now() });
   runGame({ match: m, stadium: stadiumFor(H, setup.size === 5 ? 'street' : ''), ...extra });
 }
+function makeRenderer(cv, g) {
+  const opts = { camera: S.camera, quality: S.quality, time: S.time, weather: S.weather, stadium: g.stadium };
+  if (S.camera !== 'top' && webglOK()) { try { return new Renderer3D(cv, opts); } catch (e) { console.warn('3D unavailable', e); } }
+  return new Renderer(cv, { ...opts, quality: 1, camera: 'top', hud: false });
+}
 function runGame(g) {
   input.inGame = true; screenTick = null;
-  app.innerHTML = `<div class="game"><canvas id="cv"></canvas><div id="ov"></div></div>`;
+  stopBackground();
+  app.innerHTML = `<div class="game"><canvas id="cv"></canvas>
+    <div class="hud"><div class="bug"><i class="hk"></i><span class="hn"></span><b class="sc">0 - 0</b><span class="an"></span><i class="ak"></i><span class="clk">00:00</span></div>
+    <div class="banner" id="banner"></div><canvas class="radar" id="radar" width="220" height="142"></canvas><div class="netst" id="netst"></div></div><div id="ov"></div></div>`;
   const cv = $('#cv');
-  const rd = new Renderer(cv, { camera: S.camera, quality: S.quality, time: S.time, weather: S.weather, stadium: g.stadium });
-  game = { ...g, rd, acc: 0, last: performance.now(), paused: false, sendT: 0, inT: 0 };
+  game = { ...g, rd: makeRenderer(cv, g), acc: 0, last: performance.now(), paused: false, sendT: 0, inT: 0, hud: {} };
   if (isTouch) touchControls($('.game'), input);
   sound.unlock();
   const frame = (now) => {
@@ -213,19 +263,20 @@ function runGame(g) {
         const events = m.takeEvents();
         const v = m.view();
         sound.events(events, v, m.humans.map((h) => h.team));
-        sound.crowd(excitement(v));
+        sound.crowd(excitement(v), dt);
         if (net && net.role === 'host') {
           game.sendT -= dt;
           if (game.sendT <= 0) { game.sendT = 0.05; net.api.broadcast(m.snapshot()); }
           if (events.length) net.api.broadcast({ t: 'ev', e: events.filter((x) => x.type !== 'bounce') });
         }
-        rd.draw(v, dt, { status: net ? `${net.kind.toUpperCase()} · ${net.api.peers ? net.api.peers.size : 0} guest(s)` : '' });
-        if (m.over && !game.done) { game.done = true; setTimeout(() => fullTime(m), 2200); }
+        game.rd.draw(v, dt, {});
+        updateHud(v, net ? `${net.kind.toUpperCase()} · ${net.api.peers ? net.api.peers.size : 0} guest(s)` : '');
+        if (m.over && !game.done) { game.done = true; setTimeout(() => fullTime(m), 2600); }
       }
     } else if (game.view) {
-      // A guest: draw the host's latest snapshot, smoothed.
       smooth(game, dt);
-      rd.draw(game.view, dt, { status: 'Guest · host ' + (game.hostName || '') });
+      game.rd.draw(game.view, dt, {});
+      updateHud(game.view, 'Guest');
       game.inT -= dt;
       if (game.inT <= 0) { game.inT = 1 / 30; sendPads(); }
     }
@@ -233,6 +284,40 @@ function runGame(g) {
   };
   requestAnimationFrame(frame);
   if (net && net.role === 'host' && g.match) net.api.broadcast(g.match.setup());
+}
+function updateHud(v, status) {
+  const h = game.hud, el = (k, sel) => h[k] || (h[k] = $(sel));
+  const t = v.teams;
+  if (!h.init) {
+    h.init = true;
+    el('hn', '.hud .hn').textContent = t[0].short; el('an', '.hud .an').textContent = t[1].short;
+    el('hk', '.hud .hk').style.background = t[0].kit.primary; el('ak', '.hud .ak').style.background = t[1].kit.primary;
+  }
+  const sc = `${v.score[0]} - ${v.score[1]}`;
+  if (h.sc !== sc) { h.sc = sc; el('scEl', '.hud .sc').textContent = sc; }
+  const min = Math.floor(v.clock / 60), clk = `${String(min).padStart(2, '0')}:${String(Math.floor(v.clock % 60)).padStart(2, '0')}`;
+  if (h.clk !== clk) { h.clk = clk; el('clkEl', '.hud .clk').textContent = clk; }
+  const bn = v.banner || '';
+  if (h.bn !== bn) { h.bn = bn; const b = el('bnEl', '#banner'); b.textContent = bn; b.className = 'banner' + (bn ? ' on' : '') + (/GOAL/.test(bn) ? ' goal' : ''); }
+  if (h.st !== status) { h.st = status; el('stEl', '#netst').textContent = status; }
+  h.n = (h.n || 0) + 1;
+  if (h.n % 3 === 0) drawRadar(el('rdEl', '#radar'), v);
+}
+function drawRadar(c, v) {
+  if (!c) return;
+  const g = c.getContext('2d'), w = c.width, hh = c.height, pad = 6;
+  g.clearRect(0, 0, w, hh);
+  g.fillStyle = 'rgba(8,20,12,0.55)'; g.fillRect(0, 0, w, hh);
+  g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 1.2; g.strokeRect(pad, pad, w - 2 * pad, hh - 2 * pad);
+  g.beginPath(); g.moveTo(w / 2, pad); g.lineTo(w / 2, hh - pad); g.stroke();
+  g.beginPath(); g.arc(w / 2, hh / 2, 12, 0, 7); g.stroke();
+  const X = (x) => pad + (x / v.L) * (w - 2 * pad), Y = (y) => pad + (1 - y / v.W) * (hh - 2 * pad);
+  for (const p of v.players) {
+    const hu = p.human != null ? v.humans.find((o) => o.id === p.human) : null;
+    g.fillStyle = hu ? hu.color : v.teams[p.team].kit.primary; g.strokeStyle = 'rgba(0,0,0,.6)';
+    g.beginPath(); g.arc(X(p.x), Y(p.y), hu ? 4.5 : 3.2, 0, 7); g.fill(); g.stroke();
+  }
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(X(v.ball.x), Y(v.ball.y), 2.6, 0, 7); g.fill();
 }
 function excitement(v) {
   const b = v.ball, near = Math.min(Math.abs(b.x), Math.abs(v.L - b.x)) / (v.L / 2);
@@ -242,25 +327,34 @@ function togglePause() {
   game.paused = !game.paused;
   const ov = $('#ov');
   if (!game.paused) { ov.innerHTML = ''; return; }
-  ov.innerHTML = `<div class="pause"><h2>Paused</h2><div class="menu">
+  ov.innerHTML = `<div class="pause"><h2>PAUSED</h2><div class="menu">
     <button data-act="resume" autofocus>Resume</button>
-    <label>Camera<select id="camsel">${CAMERAS.map((c) => `<option value="${c.id}" ${S.camera === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}</select></label>
+    <label>Camera<select id="camsel">${CAMERAS3D.map((c) => `<option value="${c.id}" ${S.camera === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}</select></label>
+    <button data-act="fs">Full screen</button>
     <button data-act="quitMatch" class="ghost">Quit match</button></div><p class="hint">${esc(KEY_HELP.pad)}</p></div>`;
-  $('#camsel').addEventListener('change', (e) => { S.camera = e.target.value; game.rd.cam = S.camera; saveSettings(); });
+  $('#camsel').addEventListener('change', (e) => {
+    const was3d = S.camera !== 'top';
+    S.camera = e.target.value; saveSettings();
+    if (was3d !== (S.camera !== 'top')) {
+      if (game.rd.dispose) game.rd.dispose();
+      const old = $('#cv'), cv = document.createElement('canvas'); cv.id = 'cv'; old.replaceWith(cv);
+      game.rd = makeRenderer(cv, game);
+      if (game.match) game.rd.draw(game.match.view(), 0, {});
+    } else game.rd.cam = S.camera;
+  });
   $('#ov button').focus();
 }
 function fullTime(m) {
   const st = m.stats, t = m.teams;
-  const row = (label, a, b) => `<tr><td>${a}</td><th>${label}</th><td>${b}</td></tr>`;
   const total = st[0].poss + st[1].poss || 1;
-  const scorers = (i) => st[i].goals.map((g) => `${esc(g.name)} ${g.minute}'`).join(', ') || '—';
+  const row = (label, a, b) => { const sum = (+a || 0) + (+b || 0) || 1; return `<div class="srow"><b>${a}</b><div class="sbar"><i style="width:${((+a || 0) / sum) * 100}%;background:${m.kits[0].primary}"></i><i style="width:${((+b || 0) / sum) * 100}%;background:${m.kits[1].primary}"></i></div><b>${b}</b><span>${label}</span></div>`; };
+  const scorers = (i) => st[i].goals.map((g) => `⚽ ${esc(g.name)} ${g.minute}'`).join('<br>') || '&nbsp;';
   const after = game.onEnd;
-  sound.stopCrowd();
-  $('#ov').innerHTML = `<div class="pause wide"><h2>Full time</h2>
-    <div class="final"><span>${esc(t[0].name)}</span><b>${m.score[0]} - ${m.score[1]}</b><span>${esc(t[1].name)}</span></div>
+  $('#ov').innerHTML = `<div class="pause wide"><span class="kicker">FULL TIME</span>
+    <div class="final"><div>${shirt(m.kits[0])}<span>${esc(t[0].name)}</span></div><b>${m.score[0]} - ${m.score[1]}</b><div>${shirt(m.kits[1])}<span>${esc(t[1].name)}</span></div></div>
     ${m.pens ? `<p class="hint">Penalties ${m.pens.kicks[0].filter(Boolean).length} - ${m.pens.kicks[1].filter(Boolean).length}</p>` : ''}
-    <p class="hint">${scorers(0)} · ${scorers(1)}</p>
-    <table class="stats">${row('Possession', Math.round((st[0].poss / total) * 100) + '%', Math.round((st[1].poss / total) * 100) + '%')}${row('Shots', st[0].shots, st[1].shots)}${row('On target', st[0].onTarget, st[1].onTarget)}${row('Passes', st[0].passes, st[1].passes)}${row('Tackles won', st[0].tackles, st[1].tackles)}${row('Saves', st[0].saves, st[1].saves)}</table>
+    <div class="scorers"><div>${scorers(0)}</div><div>${scorers(1)}</div></div>
+    <div class="stats">${row('Possession %', Math.round((st[0].poss / total) * 100), Math.round((st[1].poss / total) * 100))}${row('Shots', st[0].shots, st[1].shots)}${row('On target', st[0].onTarget, st[1].onTarget)}${row('Passes', st[0].passes, st[1].passes)}${row('Tackles won', st[0].tackles, st[1].tackles)}${row('Saves', st[0].saves, st[1].saves)}</div>
     <div class="menu row">${after ? '<button data-act="afterMatch" class="primary" autofocus>Continue ›</button>' : '<button data-act="rematch" class="primary" autofocus>Rematch</button><button data-act="endMatch">Main menu</button>'}</div></div>`;
   if (net && net.role === 'host') net.api.broadcast({ t: 'end', score: m.score });
   $('#ov button').focus();
@@ -270,6 +364,7 @@ function fullTime(m) {
 // --------------------------------------------------------------- tournaments
 let cup = null;
 function cups() {
+  currentTab = 'cups';
   const saved = Cup.saved();
   const byRegion = {};
   for (const c of competitions()) (byRegion[c.region] = byRegion[c.region] || []).push(c);
@@ -445,16 +540,22 @@ async function onlineMenu() {
 
 // --------------------------------------------------------------- settings
 function settings() {
-  screen(`${header('Settings', 'home')}<div class="opts col">
+  currentTab = 'settings';
+  const voices = sound.comm.list();
+  screen(`${header('Settings')}<div class="opts col">
     <label>Your name<input id="sname" value="${esc(S.name)}" maxlength="16"></label>
-    <label>Camera<select id="scam">${CAMERAS.map((c) => `<option value="${c.id}" ${S.camera === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}</select></label>
-    <label>Graphics<select id="sq">${[[0.6, 'Fast (old computers)'], [0.8, 'Balanced'], [1, 'Sharp']].map(([v, n]) => `<option value="${v}" ${+S.quality === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label>Graphics quality<select id="sq">${Object.entries(QUALITY).map(([k, q]) => `<option value="${k}" ${S.quality === k ? 'selected' : ''}>${q.label}</option>`).join('')}</select></label>
+    <label>Camera<select id="scam">${CAMERAS3D.map((c) => `<option value="${c.id}" ${S.camera === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}</select></label>
+    <label>Commentary voice<select id="svoice"><option value="auto">Best available (automatic)</option>${voices.map((v) => `<option value="${esc(v.voiceURI)}" ${S.voice === v.voiceURI ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
     <label>Volume<input id="svol" type="range" min="0" max="1" step="0.05" value="${S.volume}"></label>
-    <label class="check"><input id="ssnd" type="checkbox" ${S.sound ? 'checked' : ''}> Sound</label>
-    <label class="check"><input id="scom" type="checkbox" ${S.commentary ? 'checked' : ''}> Spoken commentary</label>
-  </div><div class="menu row"><button class="primary" data-act="saveSettings" autofocus>Save</button></div>`);
+    <label class="check"><input id="ssnd" type="checkbox" ${S.sound ? 'checked' : ''}> Sound and crowd</label>
+    <label class="check"><input id="scom" type="checkbox" ${S.commentary ? 'checked' : ''}> Commentary</label>
+    ${env.kind === 'desktop' ? `<label class="check"><input id="sfs" type="checkbox" ${S.fullscreen ? 'checked' : ''}> Start in full screen</label>` : ''}
+    <p class="hint">${webglOK() ? '3D graphics are available on this device.' : 'This device has no 3D graphics (WebGL): the 2D camera is used.'} For the most natural commentary use Windows 11, macOS or the Edge/Chrome browser, which have natural-sounding voices.</p>
+  </div><div class="menu row"><button class="ghost" data-act="testVoice">▶ Test commentary</button><button class="primary" data-act="saveSettings" autofocus>Save</button></div>`, null, 'settings');
 }
 function controls() {
+  currentTab = 'controls';
   screen(`${header('Controls', 'home')}<div class="cols">
     <div class="card"><h3>🎮 Gamepad</h3><p>${esc(KEY_HELP.pad)}</p><p>Defending: A/✕ press, B/○ tackle, X/□ slide, LB/L1 switch player.</p><p>Any USB, Bluetooth or wireless pad your system recognises works. One device reads up to 4 pads; more players join from other devices on the LAN or online.</p></div>
     <div class="card"><h3>⌨ Keyboard (left player)</h3><p>${esc(KEY_HELP.k1)}</p></div><div class="card"><h3>⌨ Keyboard (right player)</h3><p>${esc(KEY_HELP.k2)}</p></div>
@@ -465,7 +566,10 @@ function notice(title, text, back) { screen(`${header(title, back || 'home')}<p 
 
 // --------------------------------------------------------------- actions
 const ACTIONS = {
-  home: () => { leaveNet(); home(); }, quick: () => quick(), street: () => quick(5), cups, local: () => { setup = null; quick(); },
+  home: () => { leaveNet(); home(); }, multi, fs: () => toggleFs(),
+  featured: () => { quick(); if (featured) { setup.home = featured[0]; setup.away = featured[1]; renderSetup(); } },
+  prevTeam: (d) => cycleTeam(d.side, -1), nextTeam: (d) => cycleTeam(d.side, 1),
+  testVoice: () => { sound.unlock(); sound.comm.setVoice($('#svoice').value); sound.comm.enabled = true; sound.comm.say('GOAL! What a strike, and the stadium is on its feet!', { prio: 3, excite: 1 }); sound.comm.say('Clinical. You give him a sight of goal and he punishes you.', { co: true, prio: 2, ttl: 12 }); }, quick: () => quick(), street: () => quick(5), cups, local: () => { setup = null; quick(); },
   lan: lanMenu, online: onlineMenu, settings, controls,
   swap: () => { [setup.home, setup.away] = [setup.away, setup.home]; [setup.hf, setup.af] = [setup.af, setup.hf]; renderSetup(); },
   random: () => { const pool = allTeams().filter((t) => (setup.size === 5 ? t.kind === 'street' : t.kind !== 'street')); const a = pool[Math.floor(Math.random() * pool.length)]; let b; do { b = pool[Math.floor(Math.random() * pool.length)]; } while (b === a); setup.home = a.id; setup.away = b.id; renderSetup(); },
@@ -503,10 +607,49 @@ const ACTIONS = {
   quickNet: () => { quick(); },
   leaveNet: () => { leaveNet(); home(); },
   saveSettings: () => {
-    S.name = $('#sname').value.trim(); S.camera = $('#scam').value; S.quality = +$('#sq').value; S.volume = +$('#svol').value; S.sound = $('#ssnd').checked; S.commentary = $('#scom').checked;
-    saveSettings(); sound.setVolume(S.volume); sound.setOn(S.sound); sound.commentary = S.commentary; home();
+    S.name = $('#sname').value.trim(); S.camera = $('#scam').value; S.quality = $('#sq').value; S.volume = +$('#svol').value; S.sound = $('#ssnd').checked; S.commentary = $('#scom').checked; S.voice = $('#svoice').value;
+    if ($('#sfs')) S.fullscreen = $('#sfs').checked;
+    saveSettings(); sound.setVolume(S.volume); sound.setOn(S.sound); sound.commentary = S.commentary; sound.comm.setVoice(S.voice); restartBackground(); home();
   },
 };
+function cycleTeam(side, dir) {
+  const cur = teamById(setup[side]);
+  const pool = allTeams().filter((t) => t.league === cur.league);
+  const i = pool.findIndex((t) => t.id === cur.id);
+  setup[side] = pool[(i + dir + pool.length) % pool.length].id;
+  if (setup.home === setup.away) setup[side] = pool[(i + 2 * dir + pool.length * 2) % pool.length].id;
+  renderSetup();
+}
+async function toggleFs(force) {
+  try {
+    if (env.kind === 'desktop' && env.api.window) return await env.api.window.fullscreen(force);
+    if (document.fullscreenElement && force !== true) await document.exitFullscreen();
+    else if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+  } catch { /* the browser refused (no user gesture) */ }
+}
+let bg = null;
+function menuView() {
+  const p = PITCHES[11];
+  return { size: 11, pitch: p, L: p.L, W: p.W, teams: [], players: [], humans: [], ball: { x: p.L / 2, y: p.W / 2, z: 0 }, score: [0, 0], phase: 'menu', clock: 0 };
+}
+function startBackground() {
+  if (bg || !webglOK() || game) return;
+  const cv = document.createElement('canvas'); cv.id = 'bg3d'; document.body.prepend(cv);
+  let rd;
+  try { rd = new Renderer3D(cv, { menu: true, quality: S.quality === 'ultra' ? 'high' : S.quality, time: 'night', stadium: { ...stadiumFor(allTeams()[1]), roof: true } }); } catch { cv.remove(); return; }
+  bg = { cv, rd, last: performance.now(), acc: 0 };
+  const view = menuView();
+  const tick = (now) => {
+    if (!bg || bg.rd !== rd) return;
+    requestAnimationFrame(tick);
+    const dt = (now - bg.last) / 1000; bg.last = now; bg.acc += dt;
+    if (bg.acc < 1 / 30) return;
+    rd.draw(view, bg.acc); bg.acc = 0;
+  };
+  requestAnimationFrame(tick);
+}
+function stopBackground() { if (!bg) return; try { bg.rd.dispose(); } catch { /* */ } bg.cv.remove(); bg = null; }
+function restartBackground() { stopBackground(); startBackground(); }
 function leaveNet() {
   if (!net) return;
   try { net.api.close(); } catch { /* */ }
@@ -519,10 +662,16 @@ function quickResultFor(f) { const H = teamById(f.home), A = teamById(f.away); c
 // --------------------------------------------------------------- boot
 addEventListener('gamepadconnected', () => { if (!game && app.querySelector('.foot') && !screenTick) home(); });
 addEventListener('pointerdown', () => sound.unlock(), { once: true });
-addEventListener('keydown', (e) => { sound.unlock(); if (e.code === 'Escape' && game && game.match && !net) togglePause(); });
+addEventListener('keydown', (e) => {
+  sound.unlock();
+  if (e.code === 'F11') { e.preventDefault(); toggleFs(); }
+  if (e.code === 'Escape' && game && game.match && !net && !game.done) togglePause();
+  else if (e.code === 'Escape' && !game) app.querySelector('.crumb [data-act]')?.click();
+});
 (async () => {
   env = await detect();
   document.body.dataset.env = env.kind;
+  if (env.kind === 'desktop' && S.fullscreen && env.api.window) env.api.window.fullscreen(true).catch(() => {});
   const join = new URLSearchParams(location.search).get('join');
   home();
   loop();

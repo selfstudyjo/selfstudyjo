@@ -46,6 +46,7 @@ export class Match {
     this.pens = null; this.over = false;
     this.resetPositions(0);
     this.say('Kick off');
+    this.emit('kickoff', { home: this.teams[0].name, away: this.teams[1].name });
     this.emit('whistle', { long: false });
   }
 
@@ -145,9 +146,9 @@ export class Match {
   kick(p, vx, vy, vz, kind) {
     const b = this.ball;
     b.owner = null; b.last = p; b.vx = vx; b.vy = vy; b.vz = vz; b.z = Math.max(b.z, 0.12);
-    p.cd = 0.3;
+    p.cd = 0.3; p.kickT = 0.28;
     if (kind === 'shot') { b.shot = { team: p.team, decided: false, saveAt: 0 }; this.stats[p.team].shots++; }
-    if (kind === 'pass') { this.stats[p.team].passes++; this._passer = p; }
+    if (kind === 'pass') { this.stats[p.team].passes++; this._passer = p; this.emit('pass', { team: p.team, name: p.info.name, long: len(vx, vy) > 20 || vz > 3 }); }
     this.emit('kick', { power: len(vx, vy) / 30, kind });
   }
   passTo(p, target, mode) {
@@ -181,7 +182,7 @@ export class Match {
     const v = (15 + power * 16) * scale;
     const vz = clamp((0.8 + power * 4.6) * (d / 20) * (0.75 + this.r() * 0.5), 0.4, 9) * scale + (power > 0.92 ? 1.5 : 0);
     this.kick(p, Math.cos(ang) * v, Math.sin(ang) * v, vz, 'shot');
-    this.emit('shot', { team: p.team, power });
+    this.emit('shot', { team: p.team, power, name: p.info.name, dist: Math.round(len(this.goalX(p.team) - this.ball.x, this.W / 2 - this.ball.y)) });
   }
   bestPassTarget(p, dirx, diry, mode) {
     let best = null, bs = -1e9;
@@ -301,7 +302,7 @@ export class Match {
     const chance = clamp(0.42 + (def - att) / 110 + (slide ? 0.14 : 0), 0.12, 0.88);
     if (this.r() < chance) {
       this.stats[p.team].tackles++;
-      this.emit('tackle', { won: true });
+      this.emit('tackle', { won: true, team: p.team, name: p.info.name, victim: o.info.name, slide });
       if (slide) { b.owner = null; b.vx = p.fx * 6 + (this.r() - 0.5) * 4; b.vy = p.fy * 6 + (this.r() - 0.5) * 4; b.last = p; o.cd = 0.6; }
       else { o.cd = 0.5; o.stun = 0.35; this.give(p); }
     } else if (slide && this.r() < 0.22) {
@@ -315,10 +316,10 @@ export class Match {
     const inBox = Math.abs(victim.x - goalX) < this.pitch.box && Math.abs(victim.y - this.W / 2) < this.pitch.boxW / 2;
     this.emit('whistle', {});
     if (inBox && !this.pitch.walls) {
-      this.say('Penalty!');
+      this.say('Penalty!'); this.emit('restart', { kind: 'penalty', team: victim.team, name: p.info.name });
       this.setRestart('penalty', victim.team, goalX - this.attack(victim.team) * (this.size === 11 ? 11 : 7), this.W / 2);
     } else {
-      this.say('Free kick');
+      this.say('Free kick'); this.emit('restart', { kind: 'free', team: victim.team, name: p.info.name });
       this.setRestart('free', victim.team, b.x, b.y);
     }
   }
@@ -414,6 +415,7 @@ export class Match {
     for (const p of this.players) {
       if (p.stun > 0) p.stun -= dt;
       if (p.cd > 0) p.cd -= dt;
+      if (p.kickT > 0) p.kickT -= dt;
       let wx = 0, wy = 0, sprint = false;
       const h = p.human != null ? this.humans.find((x) => x.id === p.human) : null;
       if (idle) { wx = 0; wy = 0; }
@@ -529,7 +531,7 @@ export class Match {
       const ty = clamp(b.shot.saveY, W / 2 - this.pitch.goal / 2 - 0.3, W / 2 + this.pitch.goal / 2 + 0.3);
       gk.y += clamp(ty - gk.y, -9 * dt, 9 * dt);
       if (b.shot.save && Math.abs(b.x - gk.x) < 1.2) {
-        this.emit('save', { team: defTeam, catch: b.shot.catch });
+        this.emit('save', { team: defTeam, catch: b.shot.catch, name: gk.info.name, shooter: b.last ? b.last.info.name : '' });
         this.say(b.shot.catch ? 'Great catch!' : 'Saved!');
         this.stats[defTeam].saves++;
         if (b.shot.catch) { this.give(gk); gk.cd = 0; gk.think = 1.1; }
@@ -549,13 +551,15 @@ export class Match {
       const defending = this.attack(0) * side > 0 ? 1 : 0;   // the team whose goal this is
       const lastDef = b.last && b.last.team === defending;
       this.emit('whistle', {});
+      if (b.shot) this.emit('miss', { team: b.shot.team, name: b.last ? b.last.info.name : '' });
+      this.emit('restart', { kind: lastDef ? 'corner' : 'goalkick', team: lastDef ? 1 - defending : defending });
       if (lastDef) { this.say('Corner'); this.setRestart('corner', 1 - defending, gx, b.y < W / 2 ? 0.3 : W - 0.3); }
       else { this.say('Goal kick'); this.setRestart('goalkick', defending, gx - side * 5.5, W / 2 + (b.y < W / 2 ? -4 : 4)); }
       return;
     }
     if (!this.pitch.walls && (b.y < -0.1 || b.y > W + 0.1)) {
       const team = b.last ? 1 - b.last.team : 0;
-      this.say('Throw-in');
+      this.say('Throw-in'); this.emit('restart', { kind: 'throw', team });
       this.setRestart('throw', team, clamp(b.x, 1, L - 1), b.y < 0 ? 0 : W);
     }
   }
@@ -563,7 +567,8 @@ export class Match {
     this.score[team]++;
     const scorer = this.ball.last && this.ball.last.team === team ? this.ball.last : null;
     this.stats[team].goals.push({ minute: Math.ceil(this.clock / 60), name: scorer ? scorer.info.name : 'Own goal' });
-    this.emit('goal', { team, scorer: scorer ? scorer.info.name : '', score: this.score.slice() });
+    this.lastScorer = scorer ? scorer.id : -1;
+    this.emit('goal', { team, scorer: scorer ? scorer.info.name : '', score: this.score.slice(), minute: Math.ceil(this.clock / 60), own: !scorer });
     this.say('GOAL! ' + this.teams[team].name, 3);
     this.phase = 'goal'; this.phaseT = 3.2; this.kickTeam = 1 - team;
     this.ball.shot = null; this.ball.owner = null;
@@ -658,9 +663,9 @@ export class Match {
       size: this.size, pitch: this.pitch, L: this.L, W: this.W,
       teams: this.teams.map((t, i) => ({ name: t.name, short: t.short, kit: this.kits[i] })),
       players: this.players.map((p) => ({ team: p.team, gk: p.gk, x: p.x, y: p.y, fx: p.fx, fy: p.fy, anim: p.anim,
-        action: p.action, dive: p.dive, human: p.human, number: p.info.number, skin: p.info.skin, hair: p.info.hair, name: p.info.name })),
+        action: p.action, dive: p.dive, kick: p.kickT > 0, human: p.human, number: p.info.number, skin: p.info.skin, hair: p.info.hair, name: p.info.name })),
       ball: { x: b.x, y: b.y, z: b.z, owner: b.owner ? b.owner.id : -1 },
-      score: this.score.slice(), clock: this.clock, half: this.half, phase: this.phase,
+      score: this.score.slice(), scorer: this.phase === 'goal' ? this.lastScorer : -1, clock: this.clock, half: this.half, phase: this.phase,
       banner: this.bannerT > 0 ? this.banner : '', pens: this.pens ? this.pens.kicks : null,
       humans: this.humans.map((h) => ({ id: h.id, team: h.team, color: h.color, label: h.label, player: h.player ? h.player.id : -1, charge: h.charging ? h.charge : 0 })),
     };
@@ -668,8 +673,8 @@ export class Match {
   // Compact form of view() for the network: the static parts travel once, in setup().
   snapshot() {
     const v = this.view(), f = [];
-    for (const p of v.players) f.push(r1(p.x), r1(p.y), r2(p.fx), r2(p.fy), r1(p.anim), p.action === 'slide' ? 2 : p.action === 'tackle' ? 1 : 0, p.dive);
-    return { t: 's', p: f, b: [r1(v.ball.x), r1(v.ball.y), r1(v.ball.z), v.ball.owner], sc: v.score, c: Math.round(v.clock), h: v.half, ph: v.phase, bn: v.banner,
+    for (const p of v.players) f.push(r1(p.x), r1(p.y), r2(p.fx), r2(p.fy), r1(p.anim), p.action === 'slide' ? 2 : p.action === 'tackle' ? 1 : p.kickT > 0 ? 3 : 0, p.dive);
+    return { t: 's', p: f, b: [r1(v.ball.x), r1(v.ball.y), r1(v.ball.z), v.ball.owner], sc: v.score, sr: v.scorer, c: Math.round(v.clock), h: v.half, ph: v.phase, bn: v.banner,
       hu: v.humans.map((h) => [h.id, h.player, Math.round(h.charge * 20) / 20]), pe: v.pens };
   }
   setup() {
@@ -683,11 +688,11 @@ export class Match {
 export function viewFrom(setup, s) {
   const pitch = PITCHES[setup.size];
   const players = setup.players.map((p, i) => ({ ...p, x: s.p[i * 7], y: s.p[i * 7 + 1], fx: s.p[i * 7 + 2], fy: s.p[i * 7 + 3], anim: s.p[i * 7 + 4],
-    action: ['', 'tackle', 'slide'][s.p[i * 7 + 5]], dive: s.p[i * 7 + 6], human: null }));
+    action: ['', 'tackle', 'slide', ''][s.p[i * 7 + 5]], kick: s.p[i * 7 + 5] === 3, dive: s.p[i * 7 + 6], human: null }));
   const humans = setup.humans.map((h) => { const e = s.hu.find((x) => x[0] === h.id); return { ...h, player: e ? e[1] : -1, charge: e ? e[2] : 0 }; });
   for (const h of humans) if (players[h.player]) players[h.player].human = h.id;
   return { size: setup.size, pitch, L: pitch.L, W: pitch.W, teams: setup.teams, players, ball: { x: s.b[0], y: s.b[1], z: s.b[2], owner: s.b[3] },
-    score: s.sc, clock: s.c, half: s.h, phase: s.ph, banner: s.bn, pens: s.pe, humans };
+    score: s.sc, scorer: s.sr == null ? -1 : s.sr, clock: s.c, half: s.h, phase: s.ph, banner: s.bn, pens: s.pe, humans };
 }
 
 function blankStats() { return { goals: [], shots: 0, onTarget: 0, passes: 0, tackles: 0, saves: 0, fouls: 0, intercepts: 0, poss: 0 }; }
