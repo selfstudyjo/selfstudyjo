@@ -1,1 +1,0 @@
-import{Ur as e}from"./index-DlIMfeyh.js";export{e as serviceRegistry};
