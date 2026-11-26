@@ -4,7 +4,6 @@ import type { Catalogue } from '../../index';
 const os: Catalogue = {
     'Every computer': 'كل الحواسيب',
     'ISO part': 'جزء من ملف ISO',
-    'Download every ISO part below and SHA256SUMS into one folder, join them into one ISO, then write it to a USB stick with the Self-Study USB Tool.': 'نزّل كل أجزاء ملف ISO أدناه وملف SHA256SUMS في مجلد واحد، واجمعها في ملف ISO واحد، ثم انسخه إلى ذاكرة USB بأداة Self-Study USB Tool.',
     'Operating system · KDE Plasma · installs on a 64-bit PC': 'نظام تشغيل · KDE Plasma · يُثبَّت على حاسوب 64 بت',
     'A safe, fast computer for students: every SelfStudy app and SelfStudy LM Mini built in, only SelfStudy Browser for the web, and Steam ready for games.': 'حاسوب آمن وسريع للطلاب: كل تطبيقات SelfStudy وSelfStudy LM Mini مدمجة فيه، وSelfStudy Browser وحده للإنترنت، وSteam جاهز للألعاب.',
     'Every SelfStudy app, built in': 'كل تطبيقات SelfStudy مدمجة',
@@ -20,9 +19,10 @@ const os: Catalogue = {
     'The SelfStudy 2030 look': 'مظهر SelfStudy 2030',
     'A deep-space theme with a neon AI glow, a floating dock and blur effects.': 'سمة الفضاء العميق مع توهّج نيون للذكاء الاصطناعي وشريط عائم وتأثيرات ضبابية.',
     'A 64-bit PC with 4 GB of memory (8 GB recommended), 64 GB of disk and AMD or Intel graphics.': 'حاسوب 64 بت بذاكرة 4 غيغابايت (يُنصح بـ8 غيغابايت) وقرص 64 غيغابايت ورسوميات AMD أو Intel.',
-    'A USB stick of 16 GB or more. The ISO is split into parts: download every part, then join them (HOW-TO-JOIN.txt).': 'ذاكرة USB بسعة 16 غيغابايت أو أكثر. ملف ISO مقسَّم إلى أجزاء: نزّل كل الأجزاء ثم اجمعها (HOW-TO-JOIN.txt).',
     'Turn Secure Boot off in the firmware before installing. In the installer, create an administrator account for the parent or school and a standard account for the student.': 'أوقف Secure Boot في إعدادات البرنامج الثابت قبل التثبيت. وفي برنامج التثبيت أنشئ حساب مسؤول لولي الأمر أو المدرسة وحسابًا عاديًا للطالب.',
     'SelfStudy OS sends nothing about the student anywhere. The AI runs on the computer itself.': 'لا يرسل SelfStudy OS أي شيء عن الطالب إلى أي مكان. والذكاء الاصطناعي يعمل على الحاسوب نفسه.',
+    'Download every ISO part below into one folder and join them into one ISO: on Windows run copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso in that folder, on Linux or macOS cat SelfStudy-OS-*.part* > SelfStudy-OS.iso. Then write the ISO to a USB stick with the Self-Study USB Tool.': 'نزّل كل أجزاء ملف ISO أدناه في مجلد واحد واجمعها في ملف ISO واحد: على Windows شغّل copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso في ذلك المجلد، وعلى Linux أو macOS شغّل cat SelfStudy-OS-*.part* > SelfStudy-OS.iso. ثم انسخ ملف ISO إلى ذاكرة USB بأداة Self-Study USB Tool.',
+    'A USB stick of 16 GB or more, and about 20 GB of free space to download and join the parts.': 'ذاكرة USB بسعة 16 غيغابايت أو أكثر، ونحو 20 غيغابايت من المساحة الفارغة لتنزيل الأجزاء وجمعها.',
 };
 
 export default os;

@@ -94,7 +94,7 @@
               </button>
             </div>
             <p v-if="detected.mobile" class="prod-muted">{{ $t('These apps run on a computer. Open this page on your Windows, Mac or Linux computer to download them.') }}</p>
-            <p v-else-if="p.id === 'selfstudy-os'" class="prod-muted">{{ $t('Download every ISO part below and SHA256SUMS into one folder, join them into one ISO, then write it to a USB stick with the Self-Study USB Tool.') }}</p>
+            <p v-else-if="p.id === 'selfstudy-os'" class="prod-muted" dir="auto">{{ $t('Download every ISO part below into one folder and join them into one ISO: on Windows run copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso in that folder, on Linux or macOS cat SelfStudy-OS-*.part* > SelfStudy-OS.iso. Then write the ISO to a USB stick with the Self-Study USB Tool.') }}</p>
             <p v-else-if="!pickOf(p.id).gui && !pickOf(p.id).cli" class="prod-muted">{{ $t('There is no build for this computer yet. Every available build is listed below.') }}</p>
             <ul v-if="pickOf(p.id).guiAlternates.length || pickOf(p.id).cliAlternates.length" class="prod-alts">
               <li v-for="a in [...pickOf(p.id).guiAlternates, ...pickOf(p.id).cliAlternates]" :key="a.id">
@@ -781,7 +781,7 @@ const catalogue = computed<Array<{
     ],
     requirements: [
       t('A 64-bit PC with 4 GB of memory (8 GB recommended), 64 GB of disk and AMD or Intel graphics.'),
-      t('A USB stick of 16 GB or more. The ISO is split into parts: download every part, then join them (HOW-TO-JOIN.txt).'),
+      t('A USB stick of 16 GB or more, and about 20 GB of free space to download and join the parts.'),
       t('Turn Secure Boot off in the firmware before installing. In the installer, create an administrator account for the parent or school and a standard account for the student.'),
     ],
     privacy: t('SelfStudy OS sends nothing about the student anywhere. The AI runs on the computer itself.'),
