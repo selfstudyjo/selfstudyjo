@@ -58,7 +58,7 @@ export function hasPaidAiPlan(subs: unknown[]): boolean {
         && ((s?.subscription_type?.features || []) as any[]).some((f) => (f?.name ?? f) === 'ai_feature'));
 }
 
-export const PRODUCT_IDS = ['selfstudycode', 'interview-helper', 'video-editor', 'protection', 'browser', 'vpn', 'wifi', 'office', 'editor', 'studio-db', 'jobs-helper', 'usb-tool', 'mobile-os-helper', 'app-store', 'elearning', 'football'] as const;
+export const PRODUCT_IDS = ['selfstudycode', 'interview-helper', 'video-editor', 'protection', 'browser', 'vpn', 'wifi', 'office', 'editor', 'studio-db', 'jobs-helper', 'usb-tool', 'mobile-os-helper', 'app-store', 'elearning', 'football', 'selfstudy-os'] as const;
 export type ProductId = typeof PRODUCT_IDS[number];
 
 export type OsId = 'windows' | 'macos' | 'linux' | 'other';
@@ -68,7 +68,8 @@ export interface DownloadAsset {
     id: number;
     name: string;
     size: number;
-    kind: 'gui' | 'cli';
+    /** 'iso' = an operating-system image (or one part of a split one): for every computer. */
+    kind: 'gui' | 'cli' | 'iso';
     os: string;
     arch: Arch;
 }
@@ -170,7 +171,7 @@ export function pickAssets(assets: DownloadAsset[], detected: Detected): Picked 
 
 /** Assets grouped by OS for the "all downloads" table, in a fixed OS order. */
 export function groupByOs(assets: DownloadAsset[]): Array<{ os: string; assets: DownloadAsset[] }> {
-    const order = ['windows', 'macos', 'linux', 'other'];
+    const order = ['any', 'windows', 'macos', 'linux', 'other'];
     const out: Array<{ os: string; assets: DownloadAsset[] }> = [];
     for (const os of order) {
         const list = assets.filter((a) => (order.includes(a.os) ? a.os : 'other') === os)

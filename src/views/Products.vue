@@ -94,6 +94,7 @@
               </button>
             </div>
             <p v-if="detected.mobile" class="prod-muted">{{ $t('These apps run on a computer. Open this page on your Windows, Mac or Linux computer to download them.') }}</p>
+            <p v-else-if="p.id === 'selfstudy-os'" class="prod-muted">{{ $t('Download every ISO part below and SHA256SUMS into one folder, join them into one ISO, then write it to a USB stick with the Self-Study USB Tool.') }}</p>
             <p v-else-if="!pickOf(p.id).gui && !pickOf(p.id).cli" class="prod-muted">{{ $t('There is no build for this computer yet. Every available build is listed below.') }}</p>
             <ul v-if="pickOf(p.id).guiAlternates.length || pickOf(p.id).cliAlternates.length" class="prod-alts">
               <li v-for="a in [...pickOf(p.id).guiAlternates, ...pickOf(p.id).cliAlternates]" :key="a.id">
@@ -765,6 +766,26 @@ const catalogue = computed<Array<{
     ],
     privacy: t('Matches and tournaments are saved on your computer. Online play sends only the connection details through SelfStudyJo; the game itself goes straight between the players.'),
   },
+  {
+    id: 'selfstudy-os' as ProductId,
+    name: 'SelfStudy OS',
+    eyebrow: t('Operating system · KDE Plasma · installs on a 64-bit PC'),
+    lead: t('A safe, fast computer for students: every SelfStudy app and SelfStudy LM Mini built in, only SelfStudy Browser for the web, and Steam ready for games.'),
+    features: [
+      { title: t('Every SelfStudy app, built in'), text: t('Office, Text Editor, DB, Jobs Helper, USB Tool, Mobile OS Helper, E-Learning, SelfStudyCode, Interview Helper, Video Editor, Protection, Browser, VPN, WiFi Connect and the App Store, ready at first start.') },
+      { title: t('AI on the computer'), text: t('SelfStudy LM Mini is installed for every app, so the AI works offline from the first minute.') },
+      { title: t('Only SelfStudy Browser'), text: t('No other web browser can run, from any source, a USB stick included. Facebook, Instagram, WhatsApp and account-tracking tools are blocked for the whole system.') },
+      { title: t('Protection a student cannot switch off'), text: t('The system files are read-only, and the protection services cannot be stopped from a student account. Programs on USB sticks do not start.') },
+      { title: t('Games'), text: t('Steam, Proton and the graphics drivers are included, so most Windows and Linux games install and run.') },
+      { title: t('The SelfStudy 2030 look'), text: t('A deep-space theme with a neon AI glow, a floating dock and blur effects.') },
+    ],
+    requirements: [
+      t('A 64-bit PC with 4 GB of memory (8 GB recommended), 64 GB of disk and AMD or Intel graphics.'),
+      t('A USB stick of 16 GB or more. The ISO is split into parts: download every part, then join them (HOW-TO-JOIN.txt).'),
+      t('Turn Secure Boot off in the firmware before installing. In the installer, create an administrator account for the parent or school and a standard account for the student.'),
+    ],
+    privacy: t('SelfStudy OS sends nothing about the student anywhere. The AI runs on the computer itself.'),
+  },
 ]);
 
 // How to install Self-Study for Protection, per OS. The commands use the release's
@@ -907,9 +928,11 @@ function osName(os: string): string {
   if (os === 'windows') return t('Windows');
   if (os === 'macos') return t('macOS');
   if (os === 'linux') return t('Linux');
+  if (os === 'any') return t('Every computer');
   return t('your system');
 }
 function kindName(a: DownloadAsset): string {
+  if (a.kind === 'iso') return t('ISO part');
   return a.kind === 'gui' ? t('Desktop app') : t('Command line (CLI)');
 }
 
