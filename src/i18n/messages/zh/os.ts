@@ -5,7 +5,6 @@ const os: Catalogue = {
     'Every computer': '所有电脑',
     'ISO part': 'ISO 分卷',
     'Operating system · KDE Plasma · installs on a 64-bit PC': '操作系统 · KDE Plasma · 安装在 64 位电脑上',
-    'A safe, fast computer for students: every SelfStudy app and SelfStudy LM Mini built in, only SelfStudy Browser for the web, and Steam ready for games.': '一台安全、快速的学生电脑：内置所有 SelfStudy 应用和 SelfStudy LM Mini，上网只能用 SelfStudy Browser，并已为游戏准备好 Steam。',
     'Every SelfStudy app, built in': '内置所有 SelfStudy 应用',
     'Office, Text Editor, DB, Jobs Helper, USB Tool, Mobile OS Helper, E-Learning, SelfStudyCode, Interview Helper, Video Editor, Protection, Browser, VPN, WiFi Connect and the App Store, ready at first start.': 'Office、Text Editor、DB、Jobs Helper、USB Tool、Mobile OS Helper、E-Learning、SelfStudyCode、Interview Helper、Video Editor、Protection、Browser、VPN、WiFi Connect 和应用商店，首次启动即可使用。',
     'AI on the computer': '本机 AI',
@@ -14,8 +13,6 @@ const os: Catalogue = {
     'No other web browser can run, from any source, a USB stick included. Facebook, Instagram, WhatsApp and account-tracking tools are blocked for the whole system.': '任何其他浏览器都无法运行，无论来自何处，包括 U 盘。Facebook、Instagram、WhatsApp 和账号追踪工具在整个系统中均被屏蔽。',
     'Protection a student cannot switch off': '学生无法关闭的保护',
     'The system files are read-only, and the protection services cannot be stopped from a student account. Programs on USB sticks do not start.': '系统文件为只读，学生账号无法停止保护服务。U 盘上的程序不会启动。',
-    'Games': '游戏',
-    'Steam, Proton and the graphics drivers are included, so most Windows and Linux games install and run.': '已包含 Steam、Proton 和显卡驱动，大多数 Windows 和 Linux 游戏都能安装运行。',
     'The SelfStudy 2030 look': 'SelfStudy 2030 外观',
     'A deep-space theme with a neon AI glow, a floating dock and blur effects.': '深空主题，配以霓虹 AI 光效、悬浮程序坞和模糊效果。',
     'A 64-bit PC with 4 GB of memory (8 GB recommended), 64 GB of disk and AMD or Intel graphics.': '64 位电脑，4 GB 内存（建议 8 GB），64 GB 硬盘，AMD 或 Intel 显卡。',
@@ -25,6 +22,9 @@ const os: Catalogue = {
     'Get the App Store': '获取应用商店',
     'Without the App Store: download every part below into one folder and join them. On Windows run copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso in that folder, on Linux or macOS cat SelfStudy-OS-*.part* > SelfStudy-OS.iso.': '不使用应用商店：将下方所有分卷下载到同一文件夹并合并。在 Windows 上于该文件夹中运行 copy /b SelfStudy-OS-*.part* SelfStudy-OS.iso，在 Linux 或 macOS 上运行 cat SelfStudy-OS-*.part* > SelfStudy-OS.iso。',
     'A USB stick of 16 GB or more, and about 20 GB of free space to download and join the parts.': '16 GB 或更大的 U 盘，以及约 20 GB 可用空间用于下载和合并分卷。',
+    'A safe, fast computer for students: every SelfStudy app and SelfStudy LM Mini built in, and only SelfStudy Browser for the web.': '一台安全、快速的学生电脑：内置所有 SelfStudy 应用和 SelfStudy LM Mini，上网只能用 SelfStudy Browser。',
+    'Ready for games': '为游戏准备就绪',
+    'The graphics drivers, Vulkan and Wine are built in, so games run fast. Only SelfStudy apps come installed: no game store or other programs.': '内置显卡驱动、Vulkan 和 Wine，游戏运行流畅。只预装 SelfStudy 应用：没有游戏商店或其他程序。',
 };
 
 export default os;

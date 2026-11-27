@@ -776,13 +776,13 @@ const catalogue = computed<Array<{
     id: 'selfstudy-os' as ProductId,
     name: 'SelfStudy OS',
     eyebrow: t('Operating system · KDE Plasma · installs on a 64-bit PC'),
-    lead: t('A safe, fast computer for students: every SelfStudy app and SelfStudy LM Mini built in, only SelfStudy Browser for the web, and Steam ready for games.'),
+    lead: t('A safe, fast computer for students: every SelfStudy app and SelfStudy LM Mini built in, and only SelfStudy Browser for the web.'),
     features: [
       { title: t('Every SelfStudy app, built in'), text: t('Office, Text Editor, DB, Jobs Helper, USB Tool, Mobile OS Helper, E-Learning, SelfStudyCode, Interview Helper, Video Editor, Protection, Browser, VPN, WiFi Connect and the App Store, ready at first start.') },
       { title: t('AI on the computer'), text: t('SelfStudy LM Mini is installed for every app, so the AI works offline from the first minute.') },
       { title: t('Only SelfStudy Browser'), text: t('No other web browser can run, from any source, a USB stick included. Facebook, Instagram, WhatsApp and account-tracking tools are blocked for the whole system.') },
       { title: t('Protection a student cannot switch off'), text: t('The system files are read-only, and the protection services cannot be stopped from a student account. Programs on USB sticks do not start.') },
-      { title: t('Games'), text: t('Steam, Proton and the graphics drivers are included, so most Windows and Linux games install and run.') },
+      { title: t('Ready for games'), text: t('The graphics drivers, Vulkan and Wine are built in, so games run fast. Only SelfStudy apps come installed: no game store or other programs.') },
       { title: t('The SelfStudy 2030 look'), text: t('A deep-space theme with a neon AI glow, a floating dock and blur effects.') },
     ],
     requirements: [
