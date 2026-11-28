@@ -12,8 +12,13 @@
                 :class="{ on: ribbon === t.id }" @click="ribbon = t.id">{{ t.label }}</button>
       </nav>
       <div class="rs-playctl">
-        <button type="button" class="rs-play" :disabled="busy" title="Play (studio play)" @click="play()">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" /></svg>Play
+        <button type="button" class="rs-icon" title="Undo (Ctrl+Z)" :disabled="playing" @click="undo(false)">↶</button>
+        <button type="button" class="rs-icon" title="Redo (Ctrl+Y)" :disabled="playing" @click="undo(true)">↷</button>
+        <button v-if="!playing" type="button" class="rs-play" :disabled="starting" title="Play (F5)" @click="startPlay()">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" /></svg>{{ starting ? 'Starting…' : 'Play' }}
+        </button>
+        <button v-else type="button" class="rs-play rs-stop" title="Stop (Shift+F5)" @click="stopPlay()">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="3.5" width="9" height="9" /></svg>Stop
         </button>
       </div>
     </header>
@@ -21,6 +26,21 @@
     <!-- ===== Ribbon ===== -->
     <section class="rs-ribbon" aria-label="Tools">
       <template v-if="ribbon === 'home'">
+        <div class="rs-group">
+          <div class="rs-group__row">
+            <button v-for="t in TOOLS" :key="t.id" type="button" class="rs-tool rs-tool--big" :class="{ on: tool === t.id }"
+                    :title="t.title" :aria-pressed="tool === t.id" @click="setTool(t.id)"><span class="rs-glyph">{{ t.glyph }}</span>{{ t.label }}</button>
+          </div>
+          <span class="rs-group__label">Tools</span>
+        </div>
+        <div class="rs-group">
+          <div class="rs-group__row rs-snap">
+            <label><input v-model="snapMoveOn" type="checkbox" />Move <input v-model.number="snapMove" type="number" min="0.05" step="0.25" aria-label="Move snap in studs" />studs</label>
+            <label><input v-model="snapRotOn" type="checkbox" />Rotate <input v-model.number="snapRot" type="number" min="1" step="5" aria-label="Rotate snap in degrees" />°</label>
+            <button type="button" class="rs-tool rs-tool--small" :title="'Transform space (Ctrl+L)'" @click="toggleSpace">{{ space === 'world' ? 'World' : 'Local' }}</button>
+          </div>
+          <span class="rs-group__label">Snap to Grid</span>
+        </div>
         <div class="rs-group">
           <div class="rs-group__row">
             <button type="button" class="rs-tool" @click="insert('Part')"><i class="ic ic-part" />Part</button>
@@ -145,29 +165,37 @@
 
         <!-- 3D viewport -->
         <div v-if="doc === 0" class="rs-viewport">
-          <div class="rs-vp-tools">
-            <button type="button" title="Rotate the camera" @click="yaw = (yaw + 90) % 360">⟳</button>
-            <button type="button" title="Zoom in" @click="zoom = Math.min(zoom * 1.25, 8)">＋</button>
-            <button type="button" title="Zoom out" @click="zoom = Math.max(zoom / 1.25, 0.25)">－</button>
+          <div ref="vpEl" class="rs-vp3d" :class="{ playing }" />
+          <div v-if="!glReady" class="rs-vp-loading">{{ glError || 'Loading the 3D viewport…' }}</div>
+          <div v-if="!playing" class="rs-vp-tools">
             <button type="button" :class="{ on: showUi }" title="Show the StarterGui UI" @click="showUi = !showUi">UI</button>
             <select v-if="showUi" v-model="device" aria-label="Device">
               <option value="desktop">Desktop 16:9</option><option value="tablet">Tablet 4:3</option><option value="phone">Phone</option>
             </select>
+            <span class="rs-vp-hint">Right-drag: look · Wheel: zoom · Middle-drag: pan · WASD/QE: fly · F: focus · Ctrl+1-4: tools</span>
           </div>
-          <svg class="rs-scene" :viewBox="`0 0 ${VW} ${VH}`" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Workspace">
-            <defs><linearGradient id="rs-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb2e8" /><stop offset="1" stop-color="#cfe3f5" /></linearGradient></defs>
-            <rect width="100%" height="100%" fill="url(#rs-sky)" />
-            <polygon :points="groundPoints" fill="#5b5d69" stroke="#4a4c56" />
-            <g v-for="(f, i) in faces" :key="i" @click.stop="select(f.id)">
-              <polygon :points="f.points" :fill="f.fill" :fill-opacity="f.opacity" :stroke="f.selected ? '#0d99ff' : 'rgba(0,0,0,0.25)'" :stroke-width="f.selected ? 2 : 0.6" />
-            </g>
-            <text v-if="!parts.length" x="50%" y="50%" text-anchor="middle" class="rs-scene__empty">Insert a Part from the Home tab</text>
-          </svg>
-          <div v-if="showUi" class="rs-ui" :style="uiFrameStyle">
+          <div v-if="showUi && !playing" class="rs-ui" :style="uiFrameStyle">
             <div v-for="(b, i) in uiBoxes" :key="i" class="rs-ui__el" :class="{ sel: b.node.id === selectedId, hidden: b.node.raw.Visible === false }"
                  :style="uiStyle(b)" @click.stop="select(b.node.id)">{{ uiText(b.node) }}</div>
-            <p v-if="!uiBoxes.length" class="rs-ui__empty">No UI in StarterGui yet</p>
           </div>
+          <!-- Play HUD -->
+          <template v-if="playing">
+            <div class="rs-game-ui">
+              <div v-for="g in liveGui" :key="g.key" class="rs-game-el" :class="{ btn: g.button }" :style="g.style"
+                   @click="g.button && guiClick(g.name)">{{ g.text }}</div>
+            </div>
+            <div v-if="Object.keys(live?.leaderboard || {}).length" class="rs-board" aria-label="Leaderboard">
+              <table><thead><tr><th>Player</th><th v-for="k in boardKeys" :key="k">{{ k }}</th></tr></thead>
+                <tbody><tr v-for="(row, name) in live?.leaderboard" :key="name"><td>{{ name }}</td><td v-for="k in boardKeys" :key="k">{{ row[k] }}</td></tr></tbody></table>
+            </div>
+            <div class="rs-health" :title="'Health ' + Math.round(live?.health ?? 100)"><i :style="{ width: healthPct + '%' }" /></div>
+            <div v-if="promptText" class="rs-prompt" @click="promptNow">{{ promptText }}</div>
+            <div v-if="syncing" class="rs-sync">server…</div>
+            <div v-if="live?.kicked != null" class="rs-kicked">You were kicked: {{ live.kicked || 'no reason given' }}</div>
+            <div class="rs-touchpad" @pointerdown.prevent="joyStart" @pointermove.prevent="joyMove" @pointerup="joyEnd" @pointercancel="joyEnd"><i :style="joyStyle" /></div>
+            <button type="button" class="rs-jump" @pointerdown.prevent="vp?.setJump(true)" @pointerup="vp?.setJump(false)" @pointerleave="vp?.setJump(false)">Jump</button>
+            <div class="rs-play-hint">WASD move · Space jump · Right-drag camera · Wheel zoom · E interact · Shift+F5 stop</div>
+          </template>
         </div>
 
         <!-- Script editor -->
@@ -257,7 +285,7 @@
       </nav>
       <div class="rs-bottom__body">
         <template v-if="bottom === 'output'">
-          <p v-if="!lastPlay" class="rs-muted">No play test yet. Press Play - or add test actions on the Test tab.</p>
+          <p v-if="!lastPlay && !playing" class="rs-muted">No play test yet. Press Play - or add test actions on the Test tab.</p>
           <ol v-else class="rs-output">
             <li v-for="(row, i) in outputRows" :key="i" :class="'k-' + row.kind">
               <span class="t">{{ Number(row.t || 0).toFixed(2) }}s</span>
@@ -370,13 +398,14 @@
  * Workspace parts and an overlay of the StarterGui UI laid out with the same
  * arithmetic the engine's UI check uses (robloxStudio.ts).
  */
-import { computed, nextTick, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onBeforeUnmount, reactive, ref, shallowRef, watch } from 'vue';
 import type { PortalApi } from '../usePortal';
 import { cli, rows } from '@/utils/portalKit';
 import {
-    GUI_CLASSES, SCRIPT_CLASSES, SERVICES, color, hexToRgb, isGui, isPart, layoutGui, project, rawText,
+    GUI_CLASSES, SCRIPT_CLASSES, SERVICES, color, hexToRgb, isGui, isPart, layoutGui, rawText,
     toBase64, vec, type RsNode, type UiBox,
 } from './robloxStudio';
+import { StudioViewport, type PartSpec, type Tool } from './viewport3d';
 
 const props = defineProps<{ view: Record<string, any>; api: PortalApi; tool: any; busy?: boolean }>();
 const emit = defineEmits<{ (e: 'location', url: string): void; (e: 'refresh'): void }>();
@@ -406,8 +435,6 @@ const insertParent = ref<number | null>(null);
 const insertFilter = ref('');
 const actions = ref('');
 const outFilter = ref('all');
-const yaw = ref(0);
-const zoom = ref(1);
 const showUi = ref(false);
 const device = ref('desktop');
 const renaming = ref<number | null>(null);
@@ -439,9 +466,16 @@ onMounted(() => {
         observer = new ResizeObserver(entries => { narrow.value = entries[0].contentRect.width < 860; });
         observer.observe(rootEl.value);
     }
-    window.addEventListener('keydown', globalKey);
+    window.addEventListener('keydown', studioKeys);
+    nextTick(() => mountViewport());
 });
-onBeforeUnmount(() => { observer?.disconnect(); window.removeEventListener('keydown', globalKey); });
+onBeforeUnmount(() => {
+    observer?.disconnect();
+    window.removeEventListener('keydown', studioKeys);
+    window.clearInterval(heartbeat);
+    window.clearTimeout(syncTimer);
+    vp.value?.destroy();
+});
 watch(nodes, list => { if (!expanded.size) for (const n of list) if (n.depth <= 1) expanded.add(n.id); });
 
 // ---------------------------------------------------------------- Explorer
@@ -521,7 +555,10 @@ async function insert(cls: string, parent?: string) {
     const flags: Record<string, any> = {};
     const words: (string | number)[] = ['studio', 'new', cls];
     if (target) words.push(target);
-    if (isPart(cls)) Object.assign(flags, { '--set': 'Anchored=true' });
+    if (isPart(cls)) {
+        const at = vp.value?.spawnPoint() || [0, 3, 0];
+        words.push('--set', 'Anchored=true', '--set', 'Position=' + at.join(','));
+    }
     const res = await run(words, `Inserted ${cls}`, flags);
     if (res.ok) {
         const created = nodes.value.filter(n => n.class === cls).sort((a, b) => b.id - a.id)[0];
@@ -644,9 +681,6 @@ function editorKey(event: KeyboardEvent) {
     }
 }
 
-function globalKey(event: KeyboardEvent) {
-    if (event.key === 'F5' && rootEl.value?.contains(document.activeElement)) { event.preventDefault(); play(); }
-}
 
 // ---------------------------------------------------------------- testing
 const actionChips = computed(() => {
@@ -670,6 +704,7 @@ function splitActions(text: string): string[] {
 }
 
 async function play() {
+    if (playing.value) return;
     const res = await props.api.exec(cli(['studio', 'play', ...splitActions(actions.value)]), { quiet: true });
     bottom.value = 'output';
     if (!res.ok && !(res.output || '').includes('Play test')) {
@@ -687,7 +722,7 @@ async function runTool(words: string[], panel: string) {
 }
 
 const outputRows = computed(() => {
-    const list: any[] = lastPlay.value?.output || [];
+    const list: any[] = (playing.value ? live.value?.output : lastPlay.value?.output) || [];
     if (outFilter.value === 'problems') return list.filter(r => r.kind === 'warn' || r.kind === 'error');
     if (outFilter.value === 'server' || outFilter.value === 'client') return list.filter(r => r.side === outFilter.value);
     return list;
@@ -706,25 +741,6 @@ async function addProduct() {
 // ---------------------------------------------------------------- viewport
 const parts = computed(() => nodes.value.filter(n => isPart(n.class) && n.path.startsWith('Workspace')
     && !(n.name === 'Baseplate' && vec(n.raw.Size, [0, 0, 0])[0] > 100)));
-const viewScale = computed(() => {
-    let extent = 30;
-    for (const p of parts.value) {
-        const [x, y, z] = vec(p.raw.Position, [0, 0, 0]);
-        const [w, , d] = vec(p.raw.Size, [4, 1, 2]);
-        extent = Math.max(extent, Math.abs(x) + w, Math.abs(z) + d, Math.abs(y) * 1.5);
-    }
-    return (Math.min(VW, VH * 1.6) / (extent * 2.6)) * zoom.value;
-});
-const faces = computed(() => project(parts.value, yaw.value, viewScale.value, VW / 2, VH * 0.58, selectedId.value));
-const groundPoints = computed(() => {
-    const s = viewScale.value, r = 60, a = (yaw.value * Math.PI) / 180;
-    const pts = [[-r, -r], [r, -r], [r, r], [-r, r]].map(([x, z]) => {
-        const xr = x * Math.cos(a) - z * Math.sin(a), zr = x * Math.sin(a) + z * Math.cos(a);
-        return `${(VW / 2 + (xr - zr) * 0.866 * s).toFixed(1)},${(VH * 0.58 + (xr + zr) * 0.5 * s).toFixed(1)}`;
-    });
-    return pts.join(' ');
-});
-
 const DEVICES: Record<string, [number, number]> = { desktop: [1920, 1080], tablet: [1024, 768], phone: [844, 390] };
 const uiFrameStyle = computed(() => {
     const [w, h] = DEVICES[device.value];
@@ -761,6 +777,267 @@ function uiText(n: RsNode) {
     return typeof text === 'string' ? text : (n.class === 'TextButton' ? 'Button' : n.class === 'TextLabel' ? 'Label' : '');
 }
 void GUI_CLASSES;
+
+// =====================================================================
+// The 3D viewport and the transform tools
+// =====================================================================
+const TOOLS: { id: Tool; label: string; glyph: string; title: string }[] = [
+    { id: 'select', label: 'Select', glyph: '⬚', title: 'Select and drag (Ctrl+1)' },
+    { id: 'move', label: 'Move', glyph: '✥', title: 'Move (Ctrl+2)' },
+    { id: 'scale', label: 'Scale', glyph: '⤡', title: 'Scale (Ctrl+3)' },
+    { id: 'rotate', label: 'Rotate', glyph: '⟳', title: 'Rotate (Ctrl+4)' },
+];
+const vpEl = ref<HTMLElement | null>(null);
+const vp = shallowRef<StudioViewport | null>(null);
+const glReady = ref(false);
+const glError = ref('');
+const tool = ref<Tool>('select');
+const space = ref<'world' | 'local'>('world');
+const snapMoveOn = ref(true);
+const snapMove = ref(1);
+const snapRotOn = ref(true);
+const snapRot = ref(15);
+
+function partSpecs(): PartSpec[] {
+    return nodes.value.filter(n => isPart(n.class) && n.path.startsWith('Workspace')).map(n => ({
+        key: n.id, path: n.path, name: n.name, cls: n.class,
+        pos: vec(n.raw.Position, [0, 0.5, 0]), size: vec(n.raw.Size, [4, 1, 2]), rot: vec(n.raw.Orientation, [0, 0, 0]),
+        color: n.raw.Color?.v || [163, 162, 165], transparency: Number(n.raw.Transparency ?? 0),
+        material: n.raw.Material?.v || 'Plastic', shape: n.raw.Shape?.v || 'Block',
+        collide: n.raw.CanCollide !== false, touch: n.raw.CanTouch !== false, locked: n.raw.Locked === true,
+    }));
+}
+
+async function mountViewport() {
+    if (!vpEl.value || vp.value) return;
+    const view = new StudioViewport(vpEl.value, {
+        select: key => { if (key == null) selectedId.value = null; else select(Number(key)); },
+        transform: (key, pos, size, rot) => {
+            const node = nodeById.value.get(Number(key));
+            if (!node) return;
+            props.api.exec(cli(['studio', 'transform', node.path], {
+                '--pos': pos.join(','), '--size': size.join(','), '--rot': rot.join(','),
+            }), { lazy: true });
+        },
+        touch: path => queueAction('touch', path),
+        prompt: path => queueAction('prompt', path),
+        click: path => queueAction('click', path),
+        fell: () => { view.respawn(live.value?.respawn || null); },
+        hover: text => { promptText.value = text; },
+    });
+    try {
+        await view.init();
+        vp.value = view;
+        glReady.value = true;
+        view.setParts(partSpecs());
+        applySnap();
+    } catch (error: any) {
+        glError.value = 'This browser could not start WebGL: ' + String(error?.message || error);
+    }
+}
+
+watch(nodes, () => { if (!playing.value) vp.value?.setParts(partSpecs()); });
+watch(selectedId, id => { if (vp.value && vp.value.selected !== id) vp.value.setSelected(id); });
+watch(doc, value => { if (value === 0) nextTick(() => mountViewport()); });
+
+function setTool(t: Tool) { tool.value = t; vp.value?.setTool(t); }
+function toggleSpace() { space.value = space.value === 'world' ? 'local' : 'world'; vp.value?.setSpace(space.value); }
+function applySnap() {
+    vp.value?.setSnap(snapMoveOn.value ? Math.max(0.05, Number(snapMove.value) || 1) : 0,
+        snapRotOn.value ? Math.max(1, Number(snapRot.value) || 15) : 0);
+}
+watch([snapMoveOn, snapMove, snapRotOn, snapRot], applySnap);
+
+async function undo(redo: boolean) {
+    await run(['studio', redo ? 'redo' : 'undo']);
+}
+
+function studioKeys(event: KeyboardEvent) {
+    const t = event.target as HTMLElement;
+    const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT');
+    if (!rootEl.value?.contains(document.activeElement) && document.activeElement !== document.body) return;
+    if (event.key === 'F5') { event.preventDefault(); if (event.shiftKey) stopPlay(); else startPlay(); return; }
+    if (event.key === 'Escape' && playing.value) { stopPlay(); return; }
+    if (typing || playing.value) return;
+    const ctrl = event.ctrlKey || event.metaKey;
+    if (ctrl && ['1', '2', '3', '4'].includes(event.key)) { event.preventDefault(); setTool(TOOLS[Number(event.key) - 1].id); }
+    else if (ctrl && event.key.toLowerCase() === 'z') { event.preventDefault(); undo(event.shiftKey); }
+    else if (ctrl && event.key.toLowerCase() === 'y') { event.preventDefault(); undo(true); }
+    else if (ctrl && event.key.toLowerCase() === 'd') { event.preventDefault(); duplicate(); }
+    else if (ctrl && event.key.toLowerCase() === 'l') { event.preventDefault(); toggleSpace(); }
+    else if (event.key === 'Delete' && canEdit.value) { event.preventDefault(); remove(); }
+}
+
+// =====================================================================
+// Play mode: you walk around; the server runs the scripts
+// =====================================================================
+const playing = ref(false);
+const starting = ref(false);
+const syncing = ref(false);
+const live = ref<any>(null);
+const promptText = ref('');
+const actionLog: string[] = [];
+let lastActionAt = 0;
+let playStart = 0;
+let syncTimer: number | undefined;
+let heartbeat: number | undefined;
+let inFlight = false;
+let pending = false;
+let lastDeaths = 0;
+
+function elapsed() { return (performance.now() - playStart) / 1000; }
+
+function token(verb: string, arg: string) { return arg ? `${verb}:${arg}` : verb; }
+
+function queueAction(verb: string, arg: string) {
+    if (!playing.value) return;
+    const now = elapsed();
+    const gap = Math.max(0, now - lastActionAt);
+    if (gap > 0.01) actionLog.push('wait:' + gap.toFixed(2));
+    actionLog.push(token(verb, arg));
+    lastActionAt = now;
+    scheduleSync(80);
+}
+
+function scheduleSync(delay: number) {
+    window.clearTimeout(syncTimer);
+    syncTimer = window.setTimeout(sync, delay);
+}
+
+async function sync() {
+    if (!playing.value) return;
+    if (inFlight) { pending = true; return; }
+    inFlight = true;
+    syncing.value = true;
+    const words = ['studio', 'play', '--live', ...actionLog.slice(-400)];
+    try {
+        const res = await props.api.exec(cli(words, { '--time': Math.max(0.7, elapsed()).toFixed(2) }),
+            { quiet: true, unlogged: true, lazy: true });
+        if (playing.value && res.ok) applyLive(JSON.parse(String(res.output || '{}')));
+        else if (!res.ok && playing.value) props.api.notify('error', 'The server could not run the play test', String(res.error || ''));
+    } catch { /* a bad answer: the next sync retries */ }
+    inFlight = false;
+    syncing.value = false;
+    if (pending) { pending = false; scheduleSync(0); }
+}
+
+function applyLive(snap: any) {
+    live.value = snap;
+    const view = vp.value;
+    if (!view) return;
+    view.setParts((snap.world || []).map((w: any) => ({ ...w })));
+    view.setPlayInfo({ walkSpeed: snap.walkSpeed, jumpPower: snap.jumpPower, gravity: snap.gravity,
+        prompts: snap.prompts, clicks: snap.clicks });
+    if ((snap.deaths || 0) > lastDeaths) {
+        lastDeaths = snap.deaths;
+        window.setTimeout(() => { if (playing.value) view.respawn(live.value?.respawn || snap.respawn); }, 900);
+    }
+    bottom.value = 'output';
+}
+
+async function startPlay() {
+    if (playing.value || starting.value) return;
+    await mountViewport();
+    if (!vp.value) return;
+    doc.value = 0;
+    starting.value = true;
+    actionLog.length = 0;
+    lastActionAt = 0;
+    lastDeaths = 0;
+    const res = await props.api.exec(cli(['studio', 'play', '--live'], { '--time': '0.7' }), { quiet: true, unlogged: true });
+    starting.value = false;
+    if (!res.ok) { props.api.notify('error', 'Could not start the play test', String(res.error || '')); return; }
+    let snap: any;
+    try { snap = JSON.parse(String(res.output || '{}')); } catch { snap = {}; }
+    playing.value = true;
+    playStart = performance.now();
+    vp.value.startPlay(snap.respawn || [0, 4, 0]);
+    applyLive(snap);
+    heartbeat = window.setInterval(() => { if (!inFlight) sync(); }, 2500);
+    nextTick(() => vpEl.value?.querySelector('canvas')?.focus());
+}
+
+async function stopPlay() {
+    if (!playing.value) return;
+    playing.value = false;
+    window.clearInterval(heartbeat);
+    window.clearTimeout(syncTimer);
+    vp.value?.stopPlay();
+    vp.value?.setParts(partSpecs());
+    live.value = null;
+    promptText.value = '';
+    // The whole session, run once more as a real play test: it is recorded,
+    // graded and it saves DataStores - exactly like pressing Stop in Studio.
+    const words = ['studio', 'play', '--timed', ...actionLog.slice(-400)];
+    const res = await props.api.exec(cli(words, { '--time': Math.max(0.7, elapsed()).toFixed(2) }), { quiet: true });
+    bottom.value = 'output';
+    props.api.notify(res.ok ? 'success' : 'warning', res.ok ? 'Play test stopped' : 'Play test stopped with errors - see Output');
+}
+
+function guiClick(name: string) { queueAction('gui', name); }
+function promptNow() { const m = /\]/.test(promptText.value); if (m) vp.value && (vp.value as any).nearPrompt && queueAction('prompt', (vp.value as any).nearPrompt.path); }
+
+const boardKeys = computed(() => {
+    const first = Object.values(live.value?.leaderboard || {})[0] as Record<string, unknown> | undefined;
+    return first ? Object.keys(first) : [];
+});
+const healthPct = computed(() => {
+    const h = Number(live.value?.health ?? 100), m = Number(live.value?.maxHealth ?? 100) || 100;
+    return Math.max(0, Math.min(100, (h / m) * 100));
+});
+
+const liveGui = computed(() => {
+    const rows: any[] = live.value?.gui || [];
+    const host = vpEl.value;
+    const W = host?.clientWidth || 800, H = host?.clientHeight || 450;
+    const rect = new Map<number, number[]>();
+    const visible = new Map<number, boolean>();
+    const out: any[] = [];
+    for (const g of rows) {
+        const parentRect = g.parent == null ? [0, 0, W, H] : rect.get(g.parent) || [0, 0, W, H];
+        const parentVisible = g.parent == null ? true : visible.get(g.parent) !== false;
+        const shown = parentVisible && g.visible !== false;
+        visible.set(g.key, shown);
+        if (g.cls === 'ScreenGui' || g.cls === 'UICorner' || g.cls === 'UIStroke') { rect.set(g.key, parentRect); continue; }
+        const [xs, xo, ys, yo] = g.size, [pxs, pxo, pys, pyo] = g.pos, [ax, ay] = g.anchor;
+        const [rx, ry, rw, rh] = parentRect;
+        const w = xs * rw + xo, h = ys * rh + yo;
+        const x = rx + pxs * rw + pxo - ax * w, y = ry + pys * rh + pyo - ay * h;
+        rect.set(g.key, [x, y, w, h]);
+        if (!shown) continue;
+        const corner = rows.find(r => r.parent === g.key && r.cls === 'UICorner');
+        const bgT = Number(g.bgT || 0);
+        out.push({
+            key: g.key, name: g.name, button: g.button,
+            text: ['TextLabel', 'TextButton', 'TextBox'].includes(g.cls) ? (g.text ?? '') : '',
+            style: {
+                left: x + 'px', top: y + 'px', width: Math.max(0, w) + 'px', height: Math.max(0, h) + 'px',
+                background: bgT >= 1 ? 'transparent' : `rgba(${g.bg.join(',')},${1 - bgT})`,
+                color: `rgb(${g.textColor.join(',')})`, fontSize: Math.max(8, Number(g.textSize) || 14) + 'px',
+                borderRadius: corner?.radius ? `${corner.radius[1] + corner.radius[0] * Math.min(w, h)}px` : '0',
+            },
+        });
+    }
+    return out;
+});
+
+// The mobile thumbstick.
+const joy = reactive({ active: false, x: 0, y: 0, cx: 0, cy: 0 });
+const joyStyle = computed(() => ({ transform: `translate(${joy.x * 28}px, ${joy.y * 28}px)` }));
+function joyStart(e: PointerEvent) {
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    Object.assign(joy, { active: true, cx: r.left + r.width / 2, cy: r.top + r.height / 2 });
+    joyMove(e);
+}
+function joyMove(e: PointerEvent) {
+    if (!joy.active) return;
+    const dx = (e.clientX - joy.cx) / 40, dy = (e.clientY - joy.cy) / 40;
+    const len = Math.max(1, Math.hypot(dx, dy));
+    joy.x = dx / len; joy.y = dy / len;
+    vp.value?.setJoystick(joy.x, joy.y);
+}
+function joyEnd() { Object.assign(joy, { active: false, x: 0, y: 0 }); vp.value?.setJoystick(0, 0); }
 </script>
 
 <style scoped>
@@ -915,4 +1192,34 @@ void GUI_CLASSES;
 .rs--narrow .rs-props { max-height: 340px; }
 .rs--narrow .rs-bottom { height: 280px; }
 .rs--narrow .rs-modal { position: fixed; }
+.rs-icon { background: transparent; border: 1px solid var(--line); color: var(--text); border-radius: 4px; padding: 4px 8px; cursor: pointer; margin-right: 4px; }
+.rs-icon:disabled { opacity: .4; }
+.rs-stop { background: #e5484d; }
+.rs-tool.on { background: #1a4a73; border-color: var(--blue); }
+.rs-tool--big { flex-direction: column; gap: 2px; min-width: 52px; padding: 4px 6px; }
+.rs-glyph { font-size: 18px; line-height: 1; }
+.rs-snap { gap: 10px; }
+.rs-snap label { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
+.rs-snap input[type=number] { width: 52px; background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: 2px 4px; }
+.rs-viewport { background: #a9cdf2; }
+.rs-vp3d { position: absolute; inset: 0; }
+.rs-vp3d :deep(canvas) { width: 100% !important; height: 100% !important; display: block; outline: none; touch-action: none; }
+.rs-vp-loading { position: absolute; inset: 0; display: grid; place-items: center; color: #1e293b; }
+.rs-vp-hint { color: #0f172a; background: rgba(255,255,255,.75); border-radius: 4px; padding: 3px 8px; font-size: 11px; }
+.rs-game-ui { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.rs-game-el { position: absolute; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; white-space: pre-wrap; font-weight: 600; }
+.rs-game-el.btn { pointer-events: auto; cursor: pointer; }
+.rs-game-el.btn:active { filter: brightness(.85); }
+.rs-board { position: absolute; top: 8px; right: 8px; background: rgba(20,20,22,.72); color: #fff; border-radius: 6px; padding: 4px 8px; font-size: 12px; pointer-events: none; }
+.rs-board th, .rs-board td { padding: 1px 8px; text-align: left; }
+.rs-health { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: min(220px, 40%); height: 10px; background: rgba(0,0,0,.45); border-radius: 5px; overflow: hidden; }
+.rs-health i { display: block; height: 100%; background: #3ccb7f; transition: width .2s; }
+.rs-prompt { position: absolute; left: 50%; bottom: 90px; transform: translateX(-50%); background: rgba(20,20,22,.82); color: #fff; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.rs-sync { position: absolute; right: 10px; bottom: 10px; font-size: 11px; color: #0f172a; background: rgba(255,255,255,.7); padding: 2px 6px; border-radius: 4px; }
+.rs-kicked { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.6); color: #fff; font-size: 16px; }
+.rs-play-hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: 8px; white-space: nowrap; max-width: 60%; overflow: hidden; text-overflow: ellipsis; background: rgba(255,255,255,.75); color: #0f172a; font-size: 11px; padding: 3px 8px; border-radius: 4px; pointer-events: none; }
+.rs-touchpad { position: absolute; left: 18px; bottom: 18px; width: 96px; height: 96px; border-radius: 50%; background: rgba(0,0,0,.25); border: 2px solid rgba(255,255,255,.5); touch-action: none; display: grid; place-items: center; }
+.rs-touchpad i { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.75); }
+.rs-jump { position: absolute; right: 22px; bottom: 26px; width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,.6); background: rgba(0,0,0,.3); color: #fff; font-weight: 700; touch-action: none; }
+@media (pointer: fine) { .rs-touchpad, .rs-jump { opacity: .55; } }
 </style>
