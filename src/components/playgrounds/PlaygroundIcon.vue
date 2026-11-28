@@ -14,7 +14,8 @@
 import { computed } from 'vue';
 import {
   Activity, BarChart3, Blocks, Boxes, Briefcase, Car, ChefHat, Cloud, Code2,
-  Cog, Container, Database, FileCode, Gauge, GitBranch, Globe, HardDrive,
+  Cog, Container, Database, FileCode, Gamepad2, Gauge, GitBranch, Globe,
+  HardDrive,
   Layers, Network, Package, Puzzle, Server, Shield, Ship, Smartphone,
   Sparkles, Terminal, Workflow, Wrench, Zap,
 } from 'lucide-vue-next';
@@ -29,7 +30,7 @@ const GLYPHS: Record<string, unknown> = {
   chef: ChefHat, python: FileCode, code: Code2, server: Server,
   smartphone: Smartphone, globe: Globe, sparkles: Sparkles, netsim: Network,
   car: Car, spark: Zap, package: Package, file: FileCode, chart: BarChart3,
-  shield: Shield, boxes: Boxes, cog: Cog,
+  shield: Shield, boxes: Boxes, cog: Cog, gamepad: Gamepad2,
 };
 
 const glyph = computed(() => GLYPHS[props.name || ''] || Terminal);

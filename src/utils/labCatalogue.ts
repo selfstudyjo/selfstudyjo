@@ -636,6 +636,9 @@ const FAMILY_LABELS: Record<string, string> = {
     // Site reliability: the ShopFront estate (`sim:sre`) - the SRE Console and
     // five dashboards are one pane.
     sre: 'Site Reliability Engineering',
+    // Roblox (`sim:roblox`): the Studio Console and the Roblox Studio portal
+    // edit one place, so they are one pane.
+    roblox: 'Roblox Studio',
     ai: 'AI Tutor',
 };
 
